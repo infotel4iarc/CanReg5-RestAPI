@@ -22,4 +22,7 @@ public class AppProperties {
     
     /** Full path of the settings file. */
     private String settingsFilePath;
+
+    /** Role allowed to connect to Canreg for the rest api */
+    private String role;
 }
