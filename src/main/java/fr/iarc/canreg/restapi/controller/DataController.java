@@ -1,7 +1,6 @@
 package fr.iarc.canreg.restapi.controller;
 
 
-import canreg.common.database.DatabaseRecord;
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
@@ -42,47 +41,57 @@ public class DataController {
      * @param recordID
      * @return record content, null if not found and locked if there's an exception
      */
-    @SneakyThrows
     @GetMapping(path = "/patients/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Patient> getPatient(@PathVariable("recordID") Integer recordID) {
+        Patient record = null;
 
         try {
-            dataService.getPatient(recordID);
+            record = dataService.getPatient(recordID);
         } catch (RecordLockedException e) {
             return new ResponseEntity<>(HttpStatus.LOCKED);
         }
-        if ((dataService.getPatient(recordID)) == null) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        if (record == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        // TODO: create model.PatientDto to return the result
+        // with recordId and map of variables
+        return new ResponseEntity<>(record, HttpStatus.OK);
 
     }
 
-    @GetMapping(path = "/tumours", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Tumour> getTumours(@PathVariable("recordID") Integer recordID){
+    /**
+     *
+     * @param recordID
+     * @return record content, null if not found and locked if there's an exception
+     */
+    @GetMapping(path = "/sources/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Source> getSource(@PathVariable("recordID") Integer recordID) {
+        Source source = null;
+        try {
+            source = dataService.getSource(recordID);
+        } catch (RecordLockedException e) {
+            return new ResponseEntity<>(HttpStatus.LOCKED);
+        }
+        if (source == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(source, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/tumours/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Tumour> getTumour(@PathVariable("recordID") Integer recordID) {
 
         Tumour tumour = null;
         try {
-            tumour = dataService.getTumours(recordID);
+            tumour = dataService.getTumour(recordID);
         } catch (RecordLockedException e) {
-            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.LOCKED);
         }
-        if (tumour != null) {
-            return new ResponseEntity(tumour, HttpStatus.OK);
+        if (tumour == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
         }
-        return new ResponseEntity(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(tumour, HttpStatus.OK);
+
     }
-
-
-    @GetMapping(path = "/sources", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getSources(int recordID) throws RecordLockedException {
-        Source source = dataService.getSources(recordID, false);
-        if (source == null) {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
-        }
-
-        return new ResponseEntity(source, HttpStatus.OK);
-    }
-
-
 }
