@@ -1,26 +1,29 @@
 package fr.iarc.canreg.restapi.model;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import canreg.common.database.Patient;
-import org.springframework.beans.factory.annotation.Autowired;
-import canreg.server.database.CanRegDAO;
+import lombok.Getter;
 
-public class PatientDTO {
+/**
+ * Patient DTO.
+ */
+public class PatientDTO  implements Serializable {
 
-    @Autowired
-    public CanRegDAO canRegDAO;
+    @Getter
+    private final Map<String, Object> variables;
 
-    @Autowired
-    public Patient patient;
-    private final Map<String, Patient> patientMap;
-
-    public PatientDTO(Map<String, Patient> patientMap) {
-        this.patientMap = patientMap;
-    }
-
-    public Map<String, Patient> getPatientMap() {
-        return patientMap;
+    /**
+     * Constructor
+     * @param patient patient read in the database
+     */
+    public PatientDTO(Patient patient) {
+        this.variables = new HashMap<>();
+        for(String variableName : patient.getVariableNames()) {
+            variables.put(variableName, patient.getVariable(variableName));
+        }
     }
 
 

@@ -38,18 +38,20 @@ public class DataControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    private Patient testPatient;
 
     @Test
     void testGetPatientFound() throws Exception {
         Patient patient = new Patient();
         patient.setVariable("PRID", 123);
+        patient.setVariable("famn", "Smith");
         Mockito.when(canRegDAO.getRecord(123, "Patient", false)).thenReturn(patient);
         mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/patients/123")
         ).andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.variables").hasJsonPath());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables").hasJsonPath())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.famn").value("Smith"))
+        ;
         Mockito.verify(canRegDAO).getRecord(123, "Patient", false);
         // ResponseEntity<Patient> patient;
         // patient = controller.getPatient(0);
@@ -67,6 +69,14 @@ public class DataControllerTest {
         // Assertions.assertFalse(Assertions.assertEquals(patient));
     }
 
+
+    @Test
+    void testgetSourcesNotFound()throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/sources/12")).andExpect(MockMvcResultMatchers.status().isNotFound());
+        Mockito.verify(canRegDAO).getRecord(12,"Source",false);
+
+    }
 
 
 }
