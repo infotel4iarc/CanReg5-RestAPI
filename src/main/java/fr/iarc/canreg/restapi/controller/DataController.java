@@ -3,12 +3,16 @@ package fr.iarc.canreg.restapi.controller;
 
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
+import canreg.common.database.PopulationDatasetsEntry;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
+import fr.iarc.canreg.restapi.model.TumourDTO;
 import fr.iarc.canreg.restapi.service.DataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +30,7 @@ public class DataController {
 
     @Autowired
     private DataService dataService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataController.class);
 
     /**
      * @return Map
@@ -39,12 +44,28 @@ public class DataController {
     }
 
     /**
+     *
+     * @param populationID
+     * @return record content, null if not found
+     */
+
+    @GetMapping(path = "/population/{populationID}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PopulationDataset> getPopulation(@PathVariable("populationID") Integer populationID) {
+        PopulationDataset population = dataService.getPopulation(populationID);
+        if (population == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(population, HttpStatus.OK);
+    }
+
+
+    /**
      * @param recordID
      * @return record content, null if not found and locked if there's an exception
      */
     @GetMapping(path = "/patients/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PatientDTO> getPatient(@PathVariable("recordID") Integer recordID) {
-        Patient record = null;
+        Patient record;
 
         try {
             record = dataService.getPatient(recordID);
@@ -65,8 +86,7 @@ public class DataController {
      */
     @GetMapping(path = "/sources/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SourceDTO> getSource(@PathVariable("recordID") Integer recordID) {
-        Source record = null;
-
+        Source record;
 
         try {
             record = dataService.getSource(recordID);
@@ -81,20 +101,26 @@ public class DataController {
         return new ResponseEntity<SourceDTO>(new SourceDTO(record), HttpStatus.OK);
     }
 
+    /**
+     * @param recordID
+     * @return record content, null if not found and locked if there is an exception
+     */
     @GetMapping(path = "/tumours/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Tumour> getTumour(@PathVariable("recordID") Integer recordID) {
+    public ResponseEntity<TumourDTO> getTumour(@PathVariable("recordID") Integer recordID) {
+        Tumour record;
 
-        Tumour tumour = null;
         try {
-            tumour = dataService.getTumour(recordID);
+            record = dataService.getTumour(recordID);
+            LOGGER.info("record : {} ", record);
+
         } catch (RecordLockedException e) {
+            LOGGER.error("error : ", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.LOCKED);
+
         }
-        if (tumour == null) {
+        if (record == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-
         }
-        return new ResponseEntity<>(tumour, HttpStatus.OK);
-
+        return new ResponseEntity<TumourDTO>(HttpStatus.OK);
     }
 }

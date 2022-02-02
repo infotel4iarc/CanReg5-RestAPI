@@ -12,6 +12,8 @@ public interface DataServiceInterface {
 
     Map<Integer, PopulationDataset> getPopulations();
 
+    PopulationDataset getPopulation(Integer populationID);
+
     Patient getPatient(Integer recordID) throws RecordLockedException;
 
     Tumour getTumour(Integer recordID) throws RecordLockedException;

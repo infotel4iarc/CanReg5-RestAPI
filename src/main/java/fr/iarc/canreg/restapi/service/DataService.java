@@ -25,13 +25,24 @@ public class DataService implements DataServiceInterface {
     /**
      * @return return Map, never null
      */
+    @Override
     public Map<Integer, PopulationDataset> getPopulations() {
         return canRegDAO.getPopulationDatasets();
     }
 
     /**
+     * Returns the id of a PopulationsDataset
+     * @param populationID
+     * @return PopulationDataset
+     */
+    @Override
+    public PopulationDataset getPopulation(Integer populationID) {
+        return getPopulations().get(populationID);
+    }
+
+    /**
      * Returns null if the record cannot be read
-     * otherwise it returns the record from Patient
+     * else it returns the record from Patient
      *
      * @param recordID
      * @return a record of a patient
@@ -47,12 +58,13 @@ public class DataService implements DataServiceInterface {
     }
 
     /**
+     * Returns null if the record cannot be read
+     * else it returns the record from Source
      *
      * @param recordID
-     * @return
+     * @return a record of a source
      * @throws RecordLockedException
      */
-
     @Override
     public Source getSource(Integer recordID) throws RecordLockedException {
         DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
@@ -63,16 +75,11 @@ public class DataService implements DataServiceInterface {
     }
 
 
-    /**
-     * @param recordID
-     * @return
-     * @throws RecordLockedException
-     */
     @Override
     public Tumour getTumour(Integer recordID) throws RecordLockedException {
         DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
         if (record == null) {
-            LOGGER.error("Tumours  cannot be found: {}", record);
+            LOGGER.error("No tumours for recordID = {}", recordID);
         }
         return (Tumour) record;
     }
