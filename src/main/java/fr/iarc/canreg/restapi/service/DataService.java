@@ -1,19 +1,21 @@
 package fr.iarc.canreg.restapi.service;
 
+import canreg.client.gui.importers.Import;
 import canreg.common.Globals;
-import canreg.common.database.DatabaseRecord;
-import canreg.common.database.Patient;
-import canreg.common.database.PopulationDataset;
-import canreg.common.database.Source;
-import canreg.common.database.Tumour;
+import canreg.common.database.*;
 import canreg.server.database.CanRegDAO;
 import canreg.server.database.RecordLockedException;
+import fr.iarc.canreg.restapi.AppProperties;
+import fr.iarc.canreg.restapi.exception.ServerException;
+import fr.iarc.canreg.restapi.model.PatientDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.Map;
+import java.util.Properties;
 
 @Service
 public class DataService implements DataServiceInterface {
@@ -21,6 +23,14 @@ public class DataService implements DataServiceInterface {
 
     @Autowired
     public CanRegDAO canRegDAO;
+
+    @Autowired
+    private CanRegDAO canRegDAOImport;
+
+    AppProperties config;
+
+
+    Import importHoldingDB;
 
     /**
      * @return return Map, never null
@@ -82,6 +92,22 @@ public class DataService implements DataServiceInterface {
             LOGGER.error("No tumours for recordID = {}", recordID);
         }
         return (Tumour) record;
+    }
+
+    @Override
+    public void setPatient(PatientDTO patient) {
+
+        Patient patients = new Patient();
+        patients.setVariable("Patient", patient);
+        try {
+
+            canRegDAOImport.savePatient(patients);
+        } catch (SQLException e) {
+            LOGGER.error("Erreur lors de l'enregistrement de Patient: {}",  e);
+            throw new ServerException("Erreur lors de l'enregistrement de Patient: : " + e.getMessage() , e);
+        }
+        LOGGER.info(" object patient" + patient.getVariables());
+
     }
 
 }

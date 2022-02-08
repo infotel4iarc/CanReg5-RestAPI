@@ -19,6 +19,9 @@ public class AppProperties {
     
     /** Path of the configuration file for the CanReg database. */
     private String dbConfigFilePath;
+
+    /** Path of the configuration file for the CanReg holding database. */
+    private String holdingDbConfigFilePath;
     
     /** Full path of the settings file. */
     private String settingsFilePath;

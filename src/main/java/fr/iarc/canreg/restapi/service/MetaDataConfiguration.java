@@ -5,14 +5,15 @@ import canreg.common.Tools;
 import canreg.server.database.CanRegDAO;
 import canreg.server.management.SystemDescription;
 import fr.iarc.canreg.restapi.AppProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Properties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for the system.
@@ -59,12 +60,21 @@ public class MetaDataConfiguration {
         return new CanRegDAO(config.getRegistryCode(), systemDescription.getSystemDescriptionDocument(), dbProperties);
     }
 
+    @Bean
+    public CanRegDAO canRegDAOImport(AppProperties config, SystemDescription systemDescription) {
+        CanRegDAO canRegDAOImport = new CanRegDAO(config.getRegistryCode(), systemDescription.getSystemDescriptionDocument(), true);
+        //   Properties dbProperties = loadDBProperties(config.getDbConfigFilePath());
+        // dbProperties.put(config.getDbConfigFilePath(), config.getHoldingDbConfigFilePath());
+        // canRegDAOImport.initDataSource(dbProperties);
+        return canRegDAOImport;
+    }
+
     private Properties loadDBProperties(String filePath) throws IOException {
         Properties props = new Properties();
-        try (InputStream dbPropInputStream = Files.newInputStream(new File(filePath).toPath())){
+        try (InputStream dbPropInputStream = Files.newInputStream(new File(filePath).toPath())) {
             props.load(dbPropInputStream);
         }
         return props;
     }
-    
+
 }

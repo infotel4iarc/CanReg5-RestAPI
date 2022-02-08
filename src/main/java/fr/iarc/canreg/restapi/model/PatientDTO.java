@@ -5,15 +5,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 import canreg.common.database.Patient;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 
 /**
  * Patient DTO.
  */
+@Getter
 public class PatientDTO  implements Serializable {
 
-    @Getter
-    private final Map<String, Object> variables;
+
+    private  Map<String, Object> variables;
+
+    public PatientDTO() {
+
+    }
 
     /**
      * Constructor
