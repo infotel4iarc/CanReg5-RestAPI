@@ -1,18 +1,16 @@
 package fr.iarc.canreg.restapi.service;
 
 import canreg.common.Globals;
-import canreg.common.database.DatabaseRecord;
-import canreg.common.database.Patient;
-import canreg.common.database.PopulationDataset;
-import canreg.common.database.Source;
-import canreg.common.database.Tumour;
-import canreg.common.database.User;
+import canreg.common.database.*;
 import canreg.server.database.CanRegDAO;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
+
+import java.security.Principal;
 import java.sql.SQLException;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,17 +92,17 @@ public class DataService implements DataServiceInterface {
   }
 
   @Override
-  public void setPatient(PatientDTO patient, User apiUser) {
+  public int setPatient(PatientDTO patient, Principal apiUser) {
     Patient patients = new Patient();
     patients.setVariable("Patient", patient);
     try {
-      holdingDbHandler.getDaoForApiUser(apiUser).savePatient(patients);
+      User user = new User();
+      user.setUserName(apiUser.getName());
+    return  holdingDbHandler.getDaoForApiUser(user).savePatient(patients);
     } catch (SQLException e) {
       LOGGER.error("Erreur lors de l'enregistrement de Patient: {}", e);
       throw new ServerException("Erreur lors de l'enregistrement de Patient: : " + e.getMessage(), e);
     }
-    LOGGER.info(" object patient" + patient.getVariables());
-
   }
 
 }

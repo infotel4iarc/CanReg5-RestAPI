@@ -19,7 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import springfox.documentation.annotations.ApiIgnore;
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -126,12 +127,13 @@ public class DataController {
   /**
    * Set patient
    * @param patient patient
-   * @param userPrincipal user
+   * @param apiUser user
    * @return TODO
    */
     @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity setPatient(@RequestBody PatientDTO patient, UserPrincipal userPrincipal) {
-        dataService.setPatient(patient, userPrincipal.getUser());
-        return new ResponseEntity("", HttpStatus.OK);
+    public ResponseEntity<Integer> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal  apiUser) {
+
+        int result =  dataService.setPatient(patient, apiUser);
+        return new ResponseEntity(result, HttpStatus.CREATED);
     }
 }
