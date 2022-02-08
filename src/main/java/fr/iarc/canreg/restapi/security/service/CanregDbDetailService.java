@@ -1,7 +1,8 @@
-package fr.iarc.canreg.restapi.security.user;
+package fr.iarc.canreg.restapi.security.service;
 
 import canreg.common.database.User;
 import canreg.server.database.CanRegDAO;
+import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,10 +10,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
+/**
+ * Custom UserDetailsService: read the user in Canreg database.
+ */
 @Service
-public class MyUserDetailService implements UserDetailsService {
+public class CanregDbDetailService implements UserDetailsService {
 
     @Autowired
     CanRegDAO canRegDAO;
@@ -25,18 +27,11 @@ public class MyUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Map<String, User> result = canRegDAO.getUsers();
-
-        result.entrySet().removeIf(entry -> !entry.getValue().getUserRightLevel().name().equals(role));
-
-        result.entrySet().removeIf(entry -> !entry.getValue().getUserName().equals(username));
-
-        User user = result.get(username);
-
-        if (result.isEmpty()) {
-            throw new UsernameNotFoundException("User not found");
+        User user = canRegDAO.getUserByUsername(username);
+        if(user != null
+          && user.getUserRightLevel().name().equals(role)) {
+          return new UserPrincipal(user);
         }
-        return new MyUserPrincipal(user);
-
+        throw new UsernameNotFoundException("User not found");
     }
 }

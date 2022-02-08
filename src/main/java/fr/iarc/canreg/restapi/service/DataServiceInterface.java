@@ -23,4 +23,3 @@ public interface DataServiceInterface {
 
     void setPatient(PatientDTO patient);
 }
-

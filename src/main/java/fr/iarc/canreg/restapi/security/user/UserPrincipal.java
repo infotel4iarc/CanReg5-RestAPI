@@ -1,20 +1,17 @@
 package fr.iarc.canreg.restapi.security.user;
 
 import canreg.common.database.User;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Collection;
+import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
-public class MyUserPrincipal  implements UserDetails {
+public class UserPrincipal implements UserDetails {
 
     private final User user;
 
-    public MyUserPrincipal(User user) {
+    public UserPrincipal(User user) {
         this.user = user;
     }
 
