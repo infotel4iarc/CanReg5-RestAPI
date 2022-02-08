@@ -22,58 +22,66 @@ public class DataService implements DataServiceInterface {
     @Autowired
     public CanRegDAO canRegDAO;
 
-
     /**
      * @return return Map, never null
      */
+    @Override
     public Map<Integer, PopulationDataset> getPopulations() {
         return canRegDAO.getPopulationDatasets();
     }
 
     /**
+     * Returns the id of a PopulationsDataset
+     * @param populationID
+     * @return PopulationDataset
+     */
+    @Override
+    public PopulationDataset getPopulation(Integer populationID) {
+        return getPopulations().get(populationID);
+    }
+
+    /**
      * Returns null if the record cannot be read
-     * @param recordID id of a patient
-     * @return a patient
+     * else it returns the record from Patient
+     *
+     * @param recordID
+     * @return a record of a patient
      * @throws RecordLockedException
      */
+    @Override
     public Patient getPatient(Integer recordID) throws RecordLockedException {
+        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
+        if (record == null) {
+            LOGGER.error("No patient for recordId = {}", recordID);
+        }
+        return (Patient) record;
+    }
 
-        DatabaseRecord p =  canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
-
-
-        System.err.println( " patient "+ p);
-        return (Patient) canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
+    /**
+     * Returns null if the record cannot be read
+     * else it returns the record from Source
+     *
+     * @param recordID
+     * @return a record of a source
+     * @throws RecordLockedException
+     */
+    @Override
+    public Source getSource(Integer recordID) throws RecordLockedException {
+        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
+        if (record == null) {
+            LOGGER.error("No source for recordID = {}", recordID);
+        }
+        return (Source) record;
     }
 
 
-        /**
-         * @param recordID
-         * @return
-         * @throws RecordLockedException
-         */
-        public Tumour getTumours ( int recordID) throws RecordLockedException {
-            return (Tumour) canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
+    @Override
+    public Tumour getTumour(Integer recordID) throws RecordLockedException {
+        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
+        if (record == null) {
+            LOGGER.error("No tumours for recordID = {}", recordID);
         }
-
-        public Source getSources ( int recordID, boolean lock) throws RecordLockedException {
-            return (Source) canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
-        }
-
-
-        public DatabaseRecord getRecord ( int recordID, String tableName,boolean lock) throws RecordLockedException {
-            switch (tableName) {
-                case Globals.PATIENT_TABLE_NAME:
-                    return getPatient(recordID);
-
-                case Globals.TUMOUR_TABLE_NAME:
-                    return getTumours(recordID);
-
-                case Globals.SOURCE_TABLE_NAME:
-                    return getSources(recordID, lock);
-
-                default:
-                    return null;
-            }
-        }
-
+        return (Tumour) record;
     }
+
+}

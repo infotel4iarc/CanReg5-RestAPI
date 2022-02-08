@@ -40,12 +40,6 @@ public class DataServiceTest {
         Assertions.assertNotNull(populationDataset);
     }
 
-    @Test
-    void testGetTumours() {
-        Tumour tumour = new Tumour();
-        tumour.getSources();
-
-    }
 
 
 }
