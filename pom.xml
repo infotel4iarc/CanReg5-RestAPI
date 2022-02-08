@@ -24,7 +24,7 @@
         <dependency>
             <groupId>fr.iarc</groupId>
             <artifactId>CanReg5</artifactId>
-            <version>5.00.44h</version>
+            <version>5.00.44h.restapi</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
