@@ -10,6 +10,7 @@ import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
+import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import fr.iarc.canreg.restapi.service.DataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,16 +123,15 @@ public class DataController {
     }
 
 
-    /**
-     * @param patient
-     * @return
-     */
+  /**
+   * Set patient
+   * @param patient patient
+   * @param userPrincipal user
+   * @return TODO
+   */
     @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getPatient(@RequestBody PatientDTO patient) {
-
-        dataService.setPatient(patient);
-
-
+    public ResponseEntity setPatient(@RequestBody PatientDTO patient, UserPrincipal userPrincipal) {
+        dataService.setPatient(patient, userPrincipal.getUser());
         return new ResponseEntity("", HttpStatus.OK);
     }
 }

@@ -4,6 +4,7 @@ import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
+import canreg.common.database.User;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 
@@ -21,5 +22,5 @@ public interface DataServiceInterface {
 
     Tumour getTumour(Integer recordID) throws RecordLockedException;
 
-    void setPatient(PatientDTO patient);
+    void setPatient(PatientDTO patient, User username);
 }
