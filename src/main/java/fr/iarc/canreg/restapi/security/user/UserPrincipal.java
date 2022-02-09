@@ -7,8 +7,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+/**
+ * Bean user for Spring Security.
+ */
 public class UserPrincipal implements UserDetails {
 
+    /**
+     * The CanReg user that was read in the database.
+     */
     private final User user;
 
     public UserPrincipal(User user) {

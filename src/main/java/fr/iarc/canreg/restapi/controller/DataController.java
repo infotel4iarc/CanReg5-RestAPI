@@ -3,25 +3,28 @@ package fr.iarc.canreg.restapi.controller;
 
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
-import canreg.common.database.PopulationDatasetsEntry;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
-import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import fr.iarc.canreg.restapi.service.DataService;
+import java.security.Principal;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
-import java.security.Principal;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -43,7 +46,6 @@ public class DataController {
     }
 
     /**
-     *
      * @param populationID
      * @return record content, null if not found
      */
@@ -124,16 +126,16 @@ public class DataController {
     }
 
 
-  /**
-   * Set patient
-   * @param patient patient
-   * @param apiUser user
-   * @return TODO
-   */
+    /**
+     * Set patient
+     * @param patient patient
+     * @param apiUser user
+     * @return TODO
+     */
     @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Integer> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal  apiUser) {
+    public ResponseEntity<Integer> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
 
-        int result =  dataService.setPatient(patient, apiUser);
+        int result = dataService.setPatient(patient, apiUser);
         return new ResponseEntity(result, HttpStatus.CREATED);
     }
 }

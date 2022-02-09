@@ -1,6 +1,5 @@
 package fr.iarc.canreg.restapi.security.config;
 
-import canreg.server.database.CanRegDAO;
 import fr.iarc.canreg.restapi.security.password.CustomPasswordEncoder;
 import fr.iarc.canreg.restapi.security.service.CanregDbDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +21,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+  private final CustomPasswordEncoder passwordEncoder;
+  
   @Autowired
   private CanregDbDetailService userDetailsService;
 
-  @Autowired
-  private CanRegDAO canRegDAO;
+  /**
+   * Constructor.
+   */
+  public WebSecurityConfig() {
+    this.passwordEncoder = new CustomPasswordEncoder();
+  }
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
@@ -46,7 +51,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
     auth.userDetailsService(userDetailsService)
-        .passwordEncoder(this.passwordEncoder())
+        .passwordEncoder(this.passwordEncoder)
         .and()
         .authenticationProvider(authenticationProvider());
   }
@@ -55,12 +60,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   public DaoAuthenticationProvider authenticationProvider() {
     final DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
     authProvider.setUserDetailsService(userDetailsService);
-    authProvider.setPasswordEncoder(this.passwordEncoder());
+    authProvider.setPasswordEncoder(this.passwordEncoder);
     return authProvider;
   }
 
-  @Bean
-  public CustomPasswordEncoder passwordEncoder() {
-    return new CustomPasswordEncoder();
-  }
 }

@@ -23,12 +23,12 @@ public class HoldingDbHandler {
 
   /**
    * Returns a CanRegDAO for the holding database of the API user
-   * @param apiUser the api user
+   * @param apiUserName the userName of the api user
    * @return CanRegDAO
    */
-  public CanRegDAO getDaoForApiUser(User apiUser) {
+  public CanRegDAO getDaoForApiUser(String apiUserName) {
     String registryCode = CanRegServerImpl.getRegistryCodeForApiHolding(
-        mainSystemDescription.getRegistryCode(), apiUser, false);
+        mainSystemDescription.getRegistryCode(), apiUserName, false);
     return new CanRegDAO(registryCode, mainSystemDescription.getSystemDescriptionDocument(), dbProperties);
   }
 
