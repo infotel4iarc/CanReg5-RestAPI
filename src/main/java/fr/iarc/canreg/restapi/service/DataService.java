@@ -14,6 +14,7 @@ import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.util.Map;
+import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +93,7 @@ public class DataService implements DataServiceInterface {
     }
 
     @Override
-    public int setPatient(PatientDTO patientDto, Principal apiUserPrincipal) {
+    public PatientDTO savePatient(PatientDTO patientDto, Principal apiUserPrincipal)throws RecordLockedException {
         // Build the patient
         Patient patient = new Patient();
         // Fill the variables of the patient
@@ -101,8 +102,11 @@ public class DataService implements DataServiceInterface {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             int returnedId = dao.savePatient(patient);
-            return returnedId;
-        } catch (SQLException e) {
+            return new PatientDTO(getPatient(new Integer(returnedId)));
+        }catch (DerbySQLIntegrityConstraintViolationException e){
+            LOGGER.error("Patient  already exist : " + e.getMessage(), e);
+            return null;
+        }catch (SQLException e) {
             LOGGER.error("Erreur lors de l'enregistrement de Patient: " + e.getMessage(), e);
             throw new ServerException("Erreur lors de l'enregistrement de Patient: : " + e.getMessage(), e);
         }

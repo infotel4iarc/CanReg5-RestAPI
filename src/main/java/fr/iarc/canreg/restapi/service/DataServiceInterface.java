@@ -21,5 +21,5 @@ public interface DataServiceInterface {
 
     Tumour getTumour(Integer recordID) throws RecordLockedException;
 
-    int setPatient(PatientDTO patient, Principal apiUser);
+    PatientDTO savePatient(PatientDTO patient, Principal apiUser)throws RecordLockedException;
 }

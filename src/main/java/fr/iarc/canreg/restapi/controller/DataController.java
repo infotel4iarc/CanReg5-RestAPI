@@ -10,8 +10,6 @@ import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
 import fr.iarc.canreg.restapi.service.DataService;
-import java.security.Principal;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +18,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -128,14 +129,24 @@ public class DataController {
 
     /**
      * Set patient
+     *
      * @param patient patient
      * @param apiUser user
      * @return TODO
      */
-    @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Integer> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
-
-        int result = dataService.setPatient(patient, apiUser);
-        return new ResponseEntity(result, HttpStatus.CREATED);
+    @PutMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PatientDTO> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) throws RecordLockedException {
+        PatientDTO result;
+        try {
+            result = dataService.savePatient(patient, apiUser);
+            LOGGER.info("patient : {} ", result);
+        } catch (RecordLockedException e) {
+            LOGGER.error("error : ", e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.LOCKED);
+        }
+        if (result == null) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<PatientDTO>(result, HttpStatus.CREATED);
     }
 }
