@@ -1,4 +1,4 @@
-package fr.iarc.canreg.restapi.service;
+package fr.iarc.canreg.restapi.configuration;
 
 import canreg.client.LocalSettings;
 import canreg.common.Tools;
@@ -6,6 +6,7 @@ import canreg.server.CanRegServerImpl;
 import canreg.server.database.CanRegDAO;
 import canreg.server.management.SystemDescription;
 import fr.iarc.canreg.restapi.AppProperties;
+import fr.iarc.canreg.restapi.service.HoldingDbHandler;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +22,7 @@ import java.util.Properties;
  */
 @Configuration
 @EnableConfigurationProperties(AppProperties.class)
-public class MetaDataConfiguration {
+public class AppConfiguration {
 
   /**
    * Returns the XML file for the registry code.<br>
@@ -29,11 +30,24 @@ public class MetaDataConfiguration {
    * The file name is: "registryCode" + ".xml"<br>
    * This method does not check if the file exists.
    *
+   * @param config yaml application properties
    * @return file object
    */
   @Bean
   public File xmlRegistryFile(AppProperties config) {
     return new File(config.getRegistryFilesFolder(), config.getRegistryCode() + ".xml");
+  }
+
+  /**
+   * The database properties read in the file configured in "dbConfigFilePath".
+   *
+   * @param config yaml application properties
+   * @return Properties
+   * @throws IOException if the file configured in "dbConfigFilePath" cannot be found or read.
+   */
+  @Bean
+  public Properties dbProperties(AppProperties config) throws IOException {
+    return loadDBProperties(config.getDbConfigFilePath());
   }
 
   /**
@@ -51,25 +65,30 @@ public class MetaDataConfiguration {
   }
 
   /**
-   * Bean CanRegDAO.
+   * Bean CanRegDAO to access to the main database (not a holding DB).
    *
-   * @param config            config
+   * @param dbProperties      the database properties
    * @param systemDescription systemDescription
    * @return CanRegDAO
-   * @throws IOException if the file configured in "dbConfigFilePath" cannot be found
    */
   @Bean
-  public CanRegDAO canRegDAO(AppProperties config, SystemDescription systemDescription) throws IOException {
-    Properties dbProperties = loadDBProperties(config.getDbConfigFilePath());
-    return new CanRegDAO(config.getRegistryCode(), systemDescription.getSystemDescriptionDocument(), dbProperties);
+  public CanRegDAO canRegDAO(Properties dbProperties, SystemDescription systemDescription) {
+    return new CanRegDAO(systemDescription.getRegistryCode(), systemDescription.getSystemDescriptionDocument(),
+        dbProperties);
   }
 
+  /**
+   * The handler to access to the holding databases.
+   *
+   * @param dbProperties      the database properties
+   * @param systemDescription the main SystemDescription
+   * @return HoldingDbHandler
+   */
   @Bean
-  public HoldingDbHandler holdingDbHandler(AppProperties config, SystemDescription systemDescription) throws IOException {
-    Properties dbProperties = loadDBProperties(config.getDbConfigFilePath());
-    return new HoldingDbHandler(null, dbProperties, systemDescription);
+  public HoldingDbHandler holdingDbHandler(Properties dbProperties, SystemDescription systemDescription){
+    return new HoldingDbHandler(dbProperties, systemDescription);
   }
-  
+
 
   private Properties loadDBProperties(String filePath) throws IOException {
     Properties props = new Properties();
