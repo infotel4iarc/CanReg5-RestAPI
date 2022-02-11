@@ -148,7 +148,7 @@ public class DataController {
         } catch (RecordLockedException e) {
             LOGGER.error("error : ", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.LOCKED);
-        } catch (DuplicateRecordException e) {
+        }catch(DuplicateRecordException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
