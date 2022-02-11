@@ -6,6 +6,7 @@ import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.RecordLockedException;
+import com.google.gson.Gson;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
 import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
@@ -36,7 +37,7 @@ public class DataController {
     @Autowired
     private DataService dataService;
     private static final Logger LOGGER = LoggerFactory.getLogger(DataController.class);
-
+    private static final Gson gson = new Gson();
     /**
      * @return Map
      */
@@ -145,7 +146,7 @@ public class DataController {
         } catch (RecordLockedException e) {
             LOGGER.error("error : ", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.LOCKED);
-        }catch(DuplicateRecordException e){
+        } catch (DuplicateRecordException e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
@@ -159,8 +160,8 @@ public class DataController {
      * @throws RecordLockedException
      */
     @PutMapping(path = "/setTumour", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TumourDTO> setTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) throws RecordLockedException {
-        TumourDTO result;
+    public ResponseEntity setTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) throws RecordLockedException {
+        TumourDTO result = null;
         try {
             result = dataService.saveTumour(tumour, apiUser);
             LOGGER.info("tumour : {} ", result);
@@ -168,9 +169,9 @@ public class DataController {
             LOGGER.error("error : ", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.LOCKED);
         }catch(DuplicateRecordException e){
-            return   ResponseEntity.status(HttpStatus.CONFLICT).build();
+           return   ResponseEntity.status(HttpStatus.CONFLICT).body(gson.toJson(e.getMessage()));
         }catch(NotFoundException e){
-            return  ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(gson.toJson(e.getMessage()));
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
