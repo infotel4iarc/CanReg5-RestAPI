@@ -10,7 +10,6 @@ import canreg.server.database.CanRegDAO;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
-import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.util.Map;
@@ -18,11 +17,10 @@ import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolation
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DataService implements DataServiceInterface {
+public class DataService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataService.class);
 
     @Autowired
@@ -35,7 +33,6 @@ public class DataService implements DataServiceInterface {
      * Get all populations.
      * @return return Map, never null
      */
-    @Override
     public Map<Integer, PopulationDataset> getPopulations() {
         return canRegDAO.getPopulationDatasets();
     }
@@ -45,7 +42,6 @@ public class DataService implements DataServiceInterface {
      * @param populationID
      * @return PopulationDataset
      */
-    @Override
     public PopulationDataset getPopulation(Integer populationID) {
         return getPopulations().get(populationID);
     }
@@ -57,13 +53,12 @@ public class DataService implements DataServiceInterface {
      * @return a record of a patient
      * @throws RecordLockedException
      */
-    @Override
     public Patient getPatient(Integer recordID) throws RecordLockedException {
-        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
-        if (record == null) {
+        DatabaseRecord dbRecord = canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
+        if (dbRecord == null) {
             LOGGER.error("No patient for recordId = {}", recordID);
         }
-        return (Patient) record;
+        return (Patient) dbRecord;
     }
 
     /**
@@ -73,27 +68,38 @@ public class DataService implements DataServiceInterface {
      * @return a record of a source
      * @throws RecordLockedException
      */
-    @Override
     public Source getSource(Integer recordID) throws RecordLockedException {
-        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
-        if (record == null) {
+        DatabaseRecord dbRrecord = canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
+        if (dbRrecord == null) {
             LOGGER.error("No source for recordID = {}", recordID);
         }
-        return (Source) record;
+        return (Source) dbRrecord;
     }
 
 
-    @Override
+    /**
+     * Returns a tumour 
+     * @param recordID record id in the database
+     * @return Tumour
+     * @throws RecordLockedException
+     */
     public Tumour getTumour(Integer recordID) throws RecordLockedException {
-        DatabaseRecord record = canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
-        if (record == null) {
+        DatabaseRecord dbRecord = canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
+        if (dbRecord == null) {
             LOGGER.error("No tumours for recordID = {}", recordID);
         }
-        return (Tumour) record;
+        return (Tumour) dbRecord;
     }
 
-    @Override
-    public PatientDTO savePatient(PatientDTO patientDto, Principal apiUserPrincipal)throws RecordLockedException {
+    /**
+     * Save a patient.<br>
+     * @param patientDto the patient input object with or without ids (regno and patientrecordid)
+     * @param apiUserPrincipal the connected user
+     * @return the patientDTO object with the generated ids if they were not present in input<br>
+     *         null if the patient already exists with the provided id (usually the 'regno' variable)
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public PatientDTO savePatient(PatientDTO patientDto, Principal apiUserPrincipal) throws RecordLockedException {
         // Build the patient
         Patient patient = new Patient();
         // Fill the variables of the patient
@@ -102,13 +108,13 @@ public class DataService implements DataServiceInterface {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             int returnedId = dao.savePatient(patient);
-            return new PatientDTO(getPatient(new Integer(returnedId)));
+            return new PatientDTO(getPatient(returnedId));
         }catch (DerbySQLIntegrityConstraintViolationException e){
-            LOGGER.error("Patient  already exist : " + e.getMessage(), e);
+            LOGGER.error("Patient already exist : {}", e.getMessage());
             return null;
         }catch (SQLException e) {
-            LOGGER.error("Erreur lors de l'enregistrement de Patient: " + e.getMessage(), e);
-            throw new ServerException("Erreur lors de l'enregistrement de Patient: : " + e.getMessage(), e);
+            LOGGER.error("Error while saving a Patient: {}", e.getMessage(), e);
+            throw new ServerException("Error while saving a Patient: " + e.getMessage(), e);
         }
     }
 
