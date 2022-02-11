@@ -6,6 +6,8 @@ import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.RecordLockedException;
+import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
+import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
@@ -79,7 +81,7 @@ public class DataController {
         }
 
         // with recordId and map of variables
-        return new ResponseEntity<PatientDTO>(new PatientDTO(record), HttpStatus.OK);
+        return new ResponseEntity<>(new PatientDTO(record), HttpStatus.OK);
     }
 
     /**
@@ -100,7 +102,7 @@ public class DataController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<SourceDTO>(new SourceDTO(record), HttpStatus.OK);
+        return new ResponseEntity<>(new SourceDTO(record), HttpStatus.OK);
     }
 
     /**
@@ -123,7 +125,7 @@ public class DataController {
         if (record == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<TumourDTO>(HttpStatus.OK);
+        return new ResponseEntity<>(new TumourDTO(record),HttpStatus.OK);
     }
 
 
@@ -143,10 +145,33 @@ public class DataController {
         } catch (RecordLockedException e) {
             LOGGER.error("error : ", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.LOCKED);
-        }
-        if (result == null) {
+        }catch(DuplicateRecordException e){
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        return new ResponseEntity<PatientDTO>(result, HttpStatus.CREATED);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /***
+     *
+     * @param tumour tumour
+     * @param apiUser
+     * @return tumourDto
+     * @throws RecordLockedException
+     */
+    @PutMapping(path = "/setTumour", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TumourDTO> setTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) throws RecordLockedException {
+        TumourDTO result;
+        try {
+            result = dataService.saveTumour(tumour, apiUser);
+            LOGGER.info("tumour : {} ", result);
+        } catch (RecordLockedException e) {
+            LOGGER.error("error : ", e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.LOCKED);
+        }catch(DuplicateRecordException e){
+            return   ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }catch(NotFoundException e){
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 }

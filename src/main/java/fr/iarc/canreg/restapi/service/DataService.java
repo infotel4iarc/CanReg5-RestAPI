@@ -8,8 +8,13 @@ import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.CanRegDAO;
 import canreg.server.database.RecordLockedException;
+import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
+import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
+import fr.iarc.canreg.restapi.model.SourceDTO;
+import fr.iarc.canreg.restapi.model.TumourDTO;
+import fr.iarc.canreg.restapi.security.user.UserPrincipal;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.util.Map;
@@ -78,7 +83,7 @@ public class DataService {
 
 
     /**
-     * Returns a tumour 
+     * Returns a tumour
      * @param recordID record id in the database
      * @return Tumour
      * @throws RecordLockedException
@@ -111,11 +116,42 @@ public class DataService {
             return new PatientDTO(getPatient(returnedId));
         }catch (DerbySQLIntegrityConstraintViolationException e){
             LOGGER.error("Patient already exist : {}", e.getMessage());
-            return null;
+            throw new DuplicateRecordException("Patient already exist :" + e.getMessage(), e);
+
         }catch (SQLException e) {
             LOGGER.error("Error while saving a Patient: {}", e.getMessage(), e);
             throw new ServerException("Error while saving a Patient: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Save a tumour.<br>
+     * @param tumourDTO
+     * @param apiUserPrincipal the connected user
+     * @return the tumourDTO object with the generated ids if they were not present in input<br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public TumourDTO saveTumour(TumourDTO tumourDTO, Principal apiUserPrincipal)throws RecordLockedException {
+        // Build the tumour
+        Tumour tumour = new Tumour();
+        // Fill the variables of the tumour
+        tumourDTO.getVariables().entrySet().forEach(entry -> tumour.setVariable(entry.getKey(), entry.getValue()));
+
+        try {
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            int returnedId = dao.saveTumour(tumour);
+            return new TumourDTO(getTumour(returnedId));
+        }catch (DerbySQLIntegrityConstraintViolationException e){
+            if(e.getSQLState().equals("23503")) {
+                LOGGER.error("Patient not exist :{} ", e.getMessage(), e);
+                throw new NotFoundException("Patient not exist :" + e.getMessage(), e);
+            }else{
+                LOGGER.error("Tumour  already exist :{} ", e.getMessage(), e);
+                throw new DuplicateRecordException("Tumour already exist :" + e.getMessage(), e);
+            }
+        }catch (SQLException e) {
+            LOGGER.error("Error while saving a Tumour: {}", e.getMessage(), e);
+            throw new ServerException("Error while saving a Tumour: " + e.getMessage(), e);
+        }
+    }
 }
