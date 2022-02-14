@@ -10,11 +10,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+@Getter
 public class SourceDTO implements Serializable {
 
-    @Getter
-    private final Map<String,Object> variables;
+
+    private  Map<String,Object> variables;
+
+    public SourceDTO() {
+    }
 
     /**
      * Constructor

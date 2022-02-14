@@ -1,6 +1,8 @@
 package fr.iarc.canreg.restapi.controller;
 
 
+import canreg.common.Globals;
+import canreg.common.database.DatabaseRecord;
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
@@ -70,10 +72,10 @@ public class DataController {
      */
     @GetMapping(path = "/patients/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PatientDTO> getPatient(@PathVariable("recordID") Integer recordID) {
-        Patient record;
+        DatabaseRecord record;
 
         try {
-            record = dataService.getPatient(recordID);
+            record = dataService.getRecord(recordID,  Globals.PATIENT_TABLE_NAME);
         } catch (RecordLockedException e) {
             return new ResponseEntity<>(HttpStatus.LOCKED);
         }
@@ -82,7 +84,7 @@ public class DataController {
         }
 
         // with recordId and map of variables
-        return new ResponseEntity<>(new PatientDTO(record), HttpStatus.OK);
+        return new ResponseEntity<>(new PatientDTO((Patient) record), HttpStatus.OK);
     }
 
     /**
@@ -91,10 +93,10 @@ public class DataController {
      */
     @GetMapping(path = "/sources/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SourceDTO> getSource(@PathVariable("recordID") Integer recordID) {
-        Source record;
+        DatabaseRecord record;
 
         try {
-            record = dataService.getSource(recordID);
+            record = dataService.getRecord(recordID,  Globals.SOURCE_TABLE_NAME);
 
         } catch (RecordLockedException e) {
             return new ResponseEntity<>(HttpStatus.LOCKED);
@@ -103,7 +105,7 @@ public class DataController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(new SourceDTO(record), HttpStatus.OK);
+        return new ResponseEntity<>(new SourceDTO((Source) record), HttpStatus.OK);
     }
 
     /**
@@ -112,10 +114,10 @@ public class DataController {
      */
     @GetMapping(path = "/tumours/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TumourDTO> getTumour(@PathVariable("recordID") Integer recordID) {
-        Tumour record;
+        DatabaseRecord record;
 
         try {
-            record = dataService.getTumour(recordID);
+            record =dataService.getRecord(recordID,  Globals.TUMOUR_TABLE_NAME);
             LOGGER.info("record : {} ", record);
 
         } catch (RecordLockedException e) {
@@ -126,7 +128,7 @@ public class DataController {
         if (record == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(new TumourDTO(record),HttpStatus.OK);
+        return new ResponseEntity<>(new TumourDTO((Tumour) record),HttpStatus.OK);
     }
 
 
@@ -170,6 +172,30 @@ public class DataController {
             return new ResponseEntity<>(HttpStatus.LOCKED);
         }catch(DuplicateRecordException e){
            return   ResponseEntity.status(HttpStatus.CONFLICT).body(gson.toJson(e.getMessage()));
+        }catch(NotFoundException e){
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(gson.toJson(e.getMessage()));
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /***
+     *
+     * @param source source
+     * @param apiUser
+     * @return sourceDto
+     * @throws RecordLockedException
+     */
+    @PutMapping(path = "/setSource", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity setSource(@RequestBody SourceDTO source, @ApiIgnore Principal apiUser) throws RecordLockedException {
+        SourceDTO result = null;
+        try {
+            result = dataService.saveSource(source, apiUser);
+            LOGGER.info("source : {} ", result);
+        } catch (RecordLockedException e) {
+            LOGGER.error("error : ", e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.LOCKED);
+        }catch(DuplicateRecordException e){
+            return   ResponseEntity.status(HttpStatus.CONFLICT).body(gson.toJson(e.getMessage()));
         }catch(NotFoundException e){
             return  ResponseEntity.status(HttpStatus.NOT_FOUND).body(gson.toJson(e.getMessage()));
         }

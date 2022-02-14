@@ -51,20 +51,6 @@ public class DataService {
         return getPopulations().get(populationID);
     }
 
-    /**
-     * Returns null if the record cannot be read
-     * else it returns the record from Patient
-     * @param recordID
-     * @return a record of a patient
-     * @throws RecordLockedException
-     */
-    public Patient getPatient(Integer recordID) throws RecordLockedException {
-        DatabaseRecord dbRecord = canRegDAO.getRecord(recordID, Globals.PATIENT_TABLE_NAME, false);
-        if (dbRecord == null) {
-            LOGGER.error("No patient for recordId = {}", recordID);
-        }
-        return (Patient) dbRecord;
-    }
 
     /**
      * Returns null if the record cannot be read
@@ -73,28 +59,26 @@ public class DataService {
      * @return a record of a source
      * @throws RecordLockedException
      */
-    public Source getSource(Integer recordID) throws RecordLockedException {
-        DatabaseRecord dbRrecord = canRegDAO.getRecord(recordID, Globals.SOURCE_TABLE_NAME, false);
-        if (dbRrecord == null) {
-            LOGGER.error("No source for recordID = {}", recordID);
-        }
-        return (Source) dbRrecord;
+    public DatabaseRecord getRecord(Integer recordID,String table ) throws RecordLockedException {
+        return getRecord(recordID, canRegDAO,table);
     }
-
 
     /**
-     * Returns a tumour
-     * @param recordID record id in the database
-     * @return Tumour
+     * Returns null if the record cannot be read
+     * else it returns the record from Source
+     * @param recordID technical id in the table
+     * @param dao the dao to be used
+     * @return a record of a source
      * @throws RecordLockedException
      */
-    public Tumour getTumour(Integer recordID) throws RecordLockedException {
-        DatabaseRecord dbRecord = canRegDAO.getRecord(recordID, Globals.TUMOUR_TABLE_NAME, false);
+    public DatabaseRecord getRecord(Integer recordID, CanRegDAO dao, String table) throws RecordLockedException {
+        DatabaseRecord dbRecord = dao.getRecord(recordID,table, false);
         if (dbRecord == null) {
-            LOGGER.error("No tumours for recordID = {}", recordID);
+            LOGGER.error("No {} for recordID = {}", table,recordID);
         }
-        return (Tumour) dbRecord;
+        return  dbRecord;
     }
+
 
     /**
      * Save a patient.<br>
@@ -112,8 +96,9 @@ public class DataService {
 
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME,null);
             int returnedId = dao.savePatient(patient);
-            return new PatientDTO(getPatient(returnedId));
+            return new PatientDTO((Patient) getRecord(returnedId, dao,Globals.PATIENT_TABLE_NAME));
         }catch (DerbySQLIntegrityConstraintViolationException e){
             LOGGER.error("Patient already exist : {}", e.getMessage());
             throw new DuplicateRecordException("Patient already exist :" + e.getMessage(), e);
@@ -139,8 +124,9 @@ public class DataService {
 
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            tumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME,null);
             int returnedId = dao.saveTumour(tumour);
-            return new TumourDTO(getTumour(returnedId));
+            return new TumourDTO((Tumour) getRecord(returnedId, dao,Globals.TUMOUR_TABLE_NAME));
         }catch (DerbySQLIntegrityConstraintViolationException e){
             if(e.getSQLState().equals("23503")) {
                 LOGGER.error("Patient not exist :{} ", e.getMessage(), e);
@@ -152,6 +138,38 @@ public class DataService {
         }catch (SQLException e) {
             LOGGER.error("Error while saving a Tumour: {}", e.getMessage(), e);
             throw new ServerException("Error while saving a Tumour: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Save a source.<br>
+     * @param sourceDTO
+     * @param apiUserPrincipal the connected user
+     * @return the sourceDTO object with the generated ids if they were not present in input<br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public SourceDTO saveSource(SourceDTO sourceDTO, Principal apiUserPrincipal)throws RecordLockedException {
+        // Build the source
+        Source source = new Source();
+        // Fill the variables of the patient
+        sourceDTO.getVariables().entrySet().forEach(entry -> source.setVariable(entry.getKey(), entry.getValue()));
+
+        try {
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            source.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME,null);
+            int returnedId = dao.saveSource(source);
+            return new SourceDTO((Source) getRecord(returnedId, dao,Globals.SOURCE_TABLE_NAME));
+        }catch (DerbySQLIntegrityConstraintViolationException e){
+            if(e.getSQLState().equals("23503")) {
+                LOGGER.error("Tumour not exist :{} ", e.getMessage(), e);
+                throw new NotFoundException("Tumour not exist :" + e.getMessage(), e);
+            }else{
+                LOGGER.error("Source  already exist :{} ", e.getMessage(), e);
+                throw new DuplicateRecordException("Source already exist :" + e.getMessage(), e);
+            }
+        }catch (SQLException e) {
+            LOGGER.error("Error while saving a Source: {}", e.getMessage(), e);
+            throw new ServerException("Error while saving a Source: " + e.getMessage(), e);
         }
     }
 }
