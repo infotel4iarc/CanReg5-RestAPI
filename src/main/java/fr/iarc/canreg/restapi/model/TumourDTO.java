@@ -3,9 +3,10 @@ package fr.iarc.canreg.restapi.model;
 
 import canreg.common.database.Tumour;
 import lombok.Getter;
+
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Getter
 public class TumourDTO implements Serializable {
@@ -17,7 +18,7 @@ public class TumourDTO implements Serializable {
 
     }
     public TumourDTO(Tumour tumour) {
-        this.variables = new HashMap<>();
+        this.variables = new TreeMap<>();
         for (String variableName : tumour.getVariableNames()) {
             variables.put(variableName, tumour.getVariable(variableName));
 

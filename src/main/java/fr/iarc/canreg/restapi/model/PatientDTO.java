@@ -1,12 +1,11 @@
 package fr.iarc.canreg.restapi.model;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 import canreg.common.database.Patient;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Patient DTO.
@@ -26,7 +25,7 @@ public class PatientDTO  implements Serializable {
      * @param patient patient read in the database
      */
     public PatientDTO(Patient patient) {
-        this.variables = new HashMap<>();
+        this.variables = new TreeMap<>();
         for(String variableName : patient.getVariableNames()) {
             variables.put(variableName, patient.getVariable(variableName));
         }

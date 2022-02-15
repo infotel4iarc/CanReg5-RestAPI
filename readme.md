@@ -6,7 +6,15 @@ DONE
 - GET /api/meta/dictionary/all
 
 ### Business GET entry points
-- SET /api/patients: in progress
+- SET /api/patients: this method save a patient if not exist or returns exception (duplicate key)
+- SET /api/tumour: this method save a tumour
+                     * if it does not exist in the database and also if the linked patient exists 
+                      and otherwise returns a patient exception does not exist
+                     *if the tumor exists returns a duplicate key exception
+- SET /api/source: this method save a source
+                     * if it does not exist in the database and also if the linked tumour exists
+                       and otherwise returns a tumour exception does not exist
+                     *if the source exists returns a duplicate key exception
 
 ### Business GET entry points
 - Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
@@ -32,7 +40,10 @@ DONE
 - TODO: Errors have to be returned to the caller: validation errors, warning messages...
 
 ### Ids
-TODO
+- Delete technical IDs: remove technical ids in enter set methods because it generates automatic
+  *patient: prid
+  *tumour: trid
+  *source: srid
 
 ## Local run
 - Main class: CanRegApiApplication

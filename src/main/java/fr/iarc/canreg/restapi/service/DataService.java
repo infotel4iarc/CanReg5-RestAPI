@@ -14,15 +14,15 @@ import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
-import fr.iarc.canreg.restapi.security.user.UserPrincipal;
-import java.security.Principal;
-import java.sql.SQLException;
-import java.util.Map;
 import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.security.Principal;
+import java.sql.SQLException;
+import java.util.Map;
 
 @Service
 public class DataService {
@@ -51,23 +51,47 @@ public class DataService {
         return getPopulations().get(populationID);
     }
 
-
     /**
      * Returns null if the record cannot be read
-     * else it returns the record from Source
+     * else it returns the record from Patient
+     *
      * @param recordID
-     * @return a record of a source
+     * @return a record of a patient
      * @throws RecordLockedException
      */
-    public DatabaseRecord getRecord(Integer recordID,String table ) throws RecordLockedException {
-        return getRecord(recordID, canRegDAO,table);
+    public Patient getPatient(Integer recordID) throws RecordLockedException {
+        return (Patient) getRecord(recordID, canRegDAO, Globals.PATIENT_TABLE_NAME);
     }
 
     /**
      * Returns null if the record cannot be read
      * else it returns the record from Source
+     *
+     * @param recordID
+     * @return a record of a source
+     * @throws RecordLockedException
+     */
+    public Source getSource(Integer recordID) throws RecordLockedException {
+        return (Source) getRecord(recordID, canRegDAO, Globals.SOURCE_TABLE_NAME);
+    }
+
+    /**
+     * Returns a tumour
+     *
+     * @param recordID record id in the database
+     * @return Tumour
+     * @throws RecordLockedException
+     */
+    public Tumour getTumour(Integer recordID) throws RecordLockedException {
+        return (Tumour) getRecord(recordID, canRegDAO, Globals.TUMOUR_TABLE_NAME);
+    }
+
+    /**
+     * Returns null if the record cannot be read
+     * else it returns the record from Source
+     *
      * @param recordID technical id in the table
-     * @param dao the dao to be used
+     * @param dao      the dao to be used
      * @return a record of a source
      * @throws RecordLockedException
      */
@@ -96,7 +120,7 @@ public class DataService {
 
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
-            patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME,null);
+            patient.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, null);
             int returnedId = dao.savePatient(patient);
             return new PatientDTO((Patient) getRecord(returnedId, dao,Globals.PATIENT_TABLE_NAME));
         }catch (DerbySQLIntegrityConstraintViolationException e){
