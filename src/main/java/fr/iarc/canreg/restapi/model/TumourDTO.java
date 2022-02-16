@@ -5,9 +5,12 @@ import canreg.common.database.Tumour;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
+/**
+ * Tumour DTO.
+ */
 @Getter
 public class TumourDTO implements Serializable {
 
@@ -15,10 +18,14 @@ public class TumourDTO implements Serializable {
     private  Map<String, Object> variables;
 
     public TumourDTO() {
-
     }
+
+    /**
+     * Constructor
+     * @param tumour tumour read in the database
+     */
     public TumourDTO(Tumour tumour) {
-        this.variables = new TreeMap<>();
+        this.variables = new HashMap<>();
         for (String variableName : tumour.getVariableNames()) {
             variables.put(variableName, tumour.getVariable(variableName));
 

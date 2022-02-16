@@ -95,7 +95,7 @@ public class DataService {
      * @return a record of a source
      * @throws RecordLockedException
      */
-    public DatabaseRecord getRecord(Integer recordID, CanRegDAO dao, String table) throws RecordLockedException {
+    private DatabaseRecord getRecord(Integer recordID, CanRegDAO dao, String table) throws RecordLockedException {
         DatabaseRecord dbRecord = dao.getRecord(recordID,table, false);
         if (dbRecord == null) {
             LOGGER.error("No {} for recordID = {}", table,recordID);
@@ -120,7 +120,7 @@ public class DataService {
 
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
-            patient.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, null);
+            patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
             int returnedId = dao.savePatient(patient);
             return new PatientDTO((Patient) getRecord(returnedId, dao,Globals.PATIENT_TABLE_NAME));
         }catch (DerbySQLIntegrityConstraintViolationException e){

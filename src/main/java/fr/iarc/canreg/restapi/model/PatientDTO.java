@@ -4,6 +4,7 @@ import canreg.common.database.Patient;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -12,12 +13,9 @@ import java.util.TreeMap;
  */
 @Getter
 public class PatientDTO  implements Serializable {
-
-
     private  Map<String, Object> variables;
 
     public PatientDTO() {
-
     }
 
     /**
@@ -25,7 +23,7 @@ public class PatientDTO  implements Serializable {
      * @param patient patient read in the database
      */
     public PatientDTO(Patient patient) {
-        this.variables = new TreeMap<>();
+        this.variables = new HashMap<>();
         for(String variableName : patient.getVariableNames()) {
             variables.put(variableName, patient.getVariable(variableName));
         }
