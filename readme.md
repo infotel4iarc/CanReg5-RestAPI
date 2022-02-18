@@ -6,7 +6,7 @@ DONE
 - GET /api/meta/dictionary/all
 
 ### Business SET entry points
-- PUT /api/patients: 
+- POST /api/patients: create a patient 
   - 201: patient created
     - the content of the created Patient is returned with created ids and with possible warnings in the variable "format_errors"
     ```
@@ -39,15 +39,15 @@ DONE
       "path": "/api/setPatients"
     }    
     ```
-- PUT /api/tumour: 
+- POST /api/tumour: create a tumour 
   - 201: tumour created
   - 404: the linked patient is not found
   - 409: tumour already exists
-- PUT /api/source:
+- POST /api/source: create a source
     - 201: source created
     - 404: the linked tumour is not found
     - 409: source already exists
-- PUT /api/population: create a new population dataset
+- POST /api/population: create a new population dataset
   - creates a new dataset in the main database
   - uses the same json structure as the export of a dataset in CanReg5
   - error if the dataset already exists

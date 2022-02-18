@@ -22,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,7 +44,8 @@ public class DataController {
     private DataService dataService;
 
     /**
-     * @return Map
+     * Get all the populations.
+     * @return Map id, PopulationDataset
      */
     @GetMapping(path = "/populations", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<Integer, PopulationDataset>> getPopulations() {
@@ -72,7 +72,8 @@ public class DataController {
 
 
     /**
-     * @param recordID
+     * Get a patient
+     * @param recordID record id
      * @return record content, null if not found and locked if there's an exception
      */
     @GetMapping(path = "/patients/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -105,7 +106,8 @@ public class DataController {
     }
 
     /**
-     * @param recordID
+     * Get a tumour.
+     * @param recordID record id
      * @return record content, null if not found and locked if there is an exception
      */
     @GetMapping(path = "/tumours/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -123,14 +125,14 @@ public class DataController {
 
 
     /**
-     * Set patient
+     * Create a patient.
      *
      * @param patient patient
      * @param apiUser user
      * @return PatientDTO or an error
      */
-    @PutMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PatientDTO> setPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
+    @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PatientDTO> createPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
         PatientDTO result;
         try {
             result = dataService.savePatient(patient, apiUser);
@@ -145,14 +147,13 @@ public class DataController {
     }
 
     /***
-     *
+     * Create a tumour.
      * @param tumour tumour
      * @param apiUser api user
      * @return tumourDto
-     * @throws RecordLockedException should not happen
      */
-    @PutMapping(path = "/setTumour", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TumourDTO> setTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
+    @PostMapping(path = "/setTumour", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TumourDTO> createTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
         TumourDTO result = null;
         try {
             result = dataService.saveTumour(tumour, apiUser);
@@ -171,14 +172,13 @@ public class DataController {
     }
 
     /***
-     *
+     * Create a source.
      * @param source source
      * @param apiUser api user
      * @return sourceDto
-     * @throws RecordLockedException should not happen
      */
-    @PutMapping(path = "/setSource", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SourceDTO> setSource(@RequestBody SourceDTO source, @ApiIgnore Principal apiUser) {
+    @PostMapping(path = "/setSource", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SourceDTO> createSource(@RequestBody SourceDTO source, @ApiIgnore Principal apiUser) {
         SourceDTO result = null;
         try {
             result = dataService.saveSource(source, apiUser);
@@ -197,13 +197,12 @@ public class DataController {
     }
 
     /***
-     *
+     * Create a population dataset.
      * @param populationDataset populationDataset
      * @return PopulationDataset
-     * @throws RecordLockedException
      */
     @PostMapping(path = "/setPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PopulationDataset> setSource(@RequestBody PopulationDataset populationDataset) throws RecordLockedException {
+    public ResponseEntity<PopulationDataset> createPopulation(@RequestBody PopulationDataset populationDataset) {
         PopulationDataset result = null;
         try {
             result = dataService.savePopulation(populationDataset);
