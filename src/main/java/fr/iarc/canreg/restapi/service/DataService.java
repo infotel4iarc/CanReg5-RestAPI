@@ -6,7 +6,6 @@ import canreg.common.checks.CheckRecordService;
 import canreg.common.database.DatabaseRecord;
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
-import canreg.common.database.PopulationDatasetsEntry;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.CanRegDAO;
@@ -177,7 +176,7 @@ public class DataService {
                 throw new NotFoundException("Patient does not exist: " + e.getMessage(), e);
             } else {
                 LOGGER.error("Tumour already exists: {} ", e.getMessage(), e);
-                throw new DuplicateRecordException("Tumour already exist: " + e.getMessage(), e);
+                throw new DuplicateRecordException("Tumour already exists: " + e.getMessage(), e);
             }
         } catch (SQLException e) {
             throw new ServerException("Error while saving a Tumour: " + e.getMessage(), e);
@@ -208,7 +207,7 @@ public class DataService {
                 throw new NotFoundException("Tumour not exist :" + e.getMessage(), e);
             } else {
                 LOGGER.error("Source already exists :{} ", e.getMessage(), e);
-                throw new DuplicateRecordException("Source already exists :" + e.getMessage(), e);
+                throw new DuplicateRecordException("Source already exists: " + e.getMessage(), e);
             }
         } catch (SQLException e) {
             throw new ServerException("Error while saving a Source: " + e.getMessage(), e);

@@ -3,7 +3,6 @@ package fr.iarc.canreg.restapi.model;
 import canreg.common.checks.CheckMessage;
 import canreg.common.database.Patient;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 
 /**

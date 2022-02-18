@@ -82,7 +82,7 @@ public class DataController {
 
         dbRecord = dataService.getPatient(recordID);
         if (dbRecord == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient nor found: " + recordID);
         }
 
         // with recordId and map of variables

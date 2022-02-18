@@ -75,6 +75,7 @@ class DataServiceTest {
         Patient patientDb = new Patient();
         patientDb.setVariable("prid", 234);
         patientDb.setVariable("famn", "Smith");
+        patientDb.setVariable("patientrecordid", "20220001");
 
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(checkRecordService.checkPatient(Mockito.any(Patient.class))).thenReturn(new ArrayList<>());
@@ -85,7 +86,8 @@ class DataServiceTest {
 
         Mockito.verify(canRegDAO, Mockito.times(1)).savePatient(Mockito.any(Patient.class));
         Assertions.assertEquals("Smith", patientDTO.getVariables().get("famn"));
-        Assertions.assertEquals(234, patientDTO.getVariables().get("prid"));
+        Assertions.assertEquals("20220001", patientDTO.getVariables().get("patientrecordid"));
+        Assertions.assertNull(patientDTO.getVariables().get("prid"));
         Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_FORMAT_ERRORS));
         Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_RAW_DATA));
     }
@@ -100,6 +102,7 @@ class DataServiceTest {
         Patient patientDb = new Patient();
         patientDb.setVariable("prid", 234);
         patientDb.setVariable("famn", "Smith");
+        patientDb.setVariable("patientrecordid", "20220001");
 
         List<CheckMessage> checkMessages = new ArrayList<>();
         checkMessages.add(new CheckMessage("famn", "", "this variable is mandatory", false));
@@ -113,7 +116,8 @@ class DataServiceTest {
 
         Mockito.verify(canRegDAO, Mockito.times(1)).savePatient(Mockito.any(Patient.class));
         Assertions.assertEquals("Smith", patientDTO.getVariables().get("famn"));
-        Assertions.assertEquals(234, patientDTO.getVariables().get("prid"));
+        Assertions.assertEquals("20220001", patientDTO.getVariables().get("patientrecordid"));
+        Assertions.assertNull(patientDTO.getVariables().get("prid"));
         Assertions.assertEquals("[{level='warning', variable='famn', value='', message='this variable is mandatory'}]",
                 patientDTO.getVariables().get(CheckRecordService.VARIABLE_FORMAT_ERRORS).toString());
         Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_RAW_DATA));
@@ -188,10 +192,18 @@ class DataServiceTest {
         tumour.setVariable("extent", "RE");
         tumour.setVariable("patientrecordidtumourtable", "122222222");
 
+        Tumour tumourDB = new Tumour();
+        tumourDB.setVariable("trid", 1);
+        tumourDB.setVariable("extent", "RE");
+        tumourDB.setVariable("patientrecordidtumourtable", "122222222");
+        tumourDB.setVariable("tumourid", "202200010101");
+
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
-        Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(tumour);
+        Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(tumourDB);
         TumourDTO tumourDTO = dataService.saveTumour(new TumourDTO(tumour), apiUserPrincipal);
         Assertions.assertEquals("RE", tumourDTO.getVariables().get("extent"));
+        Assertions.assertEquals("202200010101", tumourDTO.getVariables().get("tumourid"));
+        // Assertions.assertNull(tumourDTO.getVariables().get("trid"));
     }
 
     @Test
@@ -205,11 +217,11 @@ class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(dbException.getSQLState()).thenReturn("23503");
         Mockito.when(canRegDAO.saveTumour(Mockito.any(Tumour.class))).thenThrow(dbException);
-
-        NotFoundException exception = Assertions.assertThrows(NotFoundException.class, () -> dataService.saveTumour(new TumourDTO(tumour), apiUserPrincipal));
+        TumourDTO tumourDTO = new TumourDTO(tumour);
+        NotFoundException exception = Assertions.assertThrows(NotFoundException.class, () -> dataService.saveTumour(tumourDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("Patient not exist :"));
+        Assertions.assertTrue(exception.getMessage().contains("Patient does not exist: "));
 
     }
 
@@ -224,11 +236,12 @@ class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(dbException.getSQLState()).thenReturn("23500");
         Mockito.when(canRegDAO.saveTumour(Mockito.any(Tumour.class))).thenThrow(dbException);
-
-        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, () -> dataService.saveTumour(new TumourDTO(tumour), apiUserPrincipal));
+        TumourDTO tumourDTO = new TumourDTO(tumour);
+        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, 
+                () -> dataService.saveTumour(tumourDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("Tumour already exist :"));
+        Assertions.assertTrue(exception.getMessage().contains("Tumour already exists: "));
     }
 
     @Test
@@ -241,8 +254,9 @@ class DataServiceTest {
 
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.saveTumour(Mockito.any(Tumour.class))).thenThrow(SQLException.class);
-
-        ServerException exception = Assertions.assertThrows(ServerException.class, () -> dataService.saveTumour(new TumourDTO(tumour), apiUserPrincipal));
+        TumourDTO tumourDTO = new TumourDTO(tumour);
+        ServerException exception = Assertions.assertThrows(ServerException.class, 
+                () -> dataService.saveTumour(tumourDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains("Error while saving a Tumour"));
@@ -256,6 +270,7 @@ class DataServiceTest {
         source.setVariable("sourcerecordid", "2006601301010");
         source.setVariable("source", "016");
         source.setVariable("tumouridsourcetable", "122222222");
+        
         Source sourceDb = new Source();
         source.setVariable("srid", "22");
         sourceDb.setVariable("sourcerecordid", "2006601301010");
@@ -264,10 +279,13 @@ class DataServiceTest {
 
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(sourceDb);
-        Mockito.verify(canRegDAO, Mockito.times(1)).saveSource(source);
+        
         SourceDTO sourceDTO = dataService.saveSource(new SourceDTO(source), apiUserPrincipal);
-        Assertions.assertTrue(("016").equals(sourceDTO.getVariables().get("source")));
-        Assertions.assertTrue(("22").equals(sourceDTO.getVariables().get("srid")));
+        
+        Mockito.verify(canRegDAO, Mockito.times(1)).saveSource(Mockito.any());
+        Assertions.assertEquals("016", sourceDTO.getVariables().get("source"));
+        Assertions.assertNull(sourceDTO.getVariables().get("srid"));
+        Assertions.assertEquals("2006601301010", sourceDTO.getVariables().get("sourcerecordid"));
 
     }
 
@@ -283,7 +301,9 @@ class DataServiceTest {
         Mockito.when(dbException.getSQLState()).thenReturn("23503");
         Mockito.when(canRegDAO.saveSource(Mockito.any(Source.class))).thenThrow(dbException);
 
-        NotFoundException exception = Assertions.assertThrows(NotFoundException.class, () -> dataService.saveSource(new SourceDTO(source), apiUserPrincipal));
+        SourceDTO sourceDTO = new SourceDTO(source);
+        NotFoundException exception = Assertions.assertThrows(NotFoundException.class, 
+                () -> dataService.saveSource(sourceDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains("Tumour not exist :"));
@@ -302,10 +322,12 @@ class DataServiceTest {
         Mockito.when(dbException.getSQLState()).thenReturn("23500");
         Mockito.when(canRegDAO.saveSource(Mockito.any(Source.class))).thenThrow(dbException);
 
-        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, () -> dataService.saveSource(new SourceDTO(source), apiUserPrincipal));
+        SourceDTO sourceDTO = new SourceDTO(source);
+        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, 
+                () -> dataService.saveSource(sourceDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("Source already exist :"));
+        Assertions.assertTrue(exception.getMessage().contains("Source already exists: "));
     }
 
     @Test
@@ -319,7 +341,9 @@ class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.saveSource(Mockito.any(Source.class))).thenThrow(SQLException.class);
 
-        ServerException exception = Assertions.assertThrows(ServerException.class, () -> dataService.saveSource(new SourceDTO(source), apiUserPrincipal));
+        SourceDTO sourceDTO = new SourceDTO(source);
+        ServerException exception = Assertions.assertThrows(ServerException.class, 
+                () -> dataService.saveSource(sourceDTO, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains("Error while saving a Source"));
