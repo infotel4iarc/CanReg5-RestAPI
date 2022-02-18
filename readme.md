@@ -5,16 +5,52 @@ DONE
 - GET /api/meta/dictionary/{dictionaryId}
 - GET /api/meta/dictionary/all
 
-### Business GET entry points
-- SET /api/patients: this method save a patient if not exist or returns exception (duplicate key)
-- SET /api/tumour: this method save a tumour
-                     * if it does not exist in the database and also if the linked patient exists 
-                      and otherwise returns a patient exception does not exist
-                     *if the tumor exists returns a duplicate key exception
-- SET /api/source: this method save a source
-                     * if it does not exist in the database and also if the linked tumour exists
-                       and otherwise returns a tumour exception does not exist
-                     *if the source exists returns a duplicate key exception
+### Business SET entry points
+- PUT /api/patients: 
+  - 201: patient created
+    - the content of the created Patient is returned with created ids and with possible warnings in the variable "format_errors"
+    ```
+    "format_errors": [
+      {
+        "variableName": "birthd",
+        "variableValue": "",
+        "message": "this variable is mandatory",
+        "error": false
+      }
+    ]
+    ```
+  - 409: patient already exists
+    ```
+    {
+      "timestamp": 1645171082093,
+      "status": 409,
+      "error": "Conflict",
+      "message": "The record already exists",
+      "path": "/api/setPatients"
+    }    
+    ```
+  - 400: validation error
+    ```
+    {
+      "timestamp": 1645170918683,
+      "status": 400,
+      "error": "Bad Request",
+      "message": "Validation failed: [{level='error', variable='birthd', value='1920-01-20', message='this date is not a valid date yyyyMMdd'}]",
+      "path": "/api/setPatients"
+    }    
+    ```
+- PUT /api/tumour: 
+  - 201: tumour created
+  - 404: the linked patient is not found
+  - 409: tumour already exists
+- PUT /api/source:
+    - 201: source created
+    - 404: the linked tumour is not found
+    - 409: source already exists
+- PUT /api/population: create a new population dataset
+  - creates a new dataset in the main database
+  - uses the same json structure as the export of a dataset in CanReg5
+  - error if the dataset already exists
 
 ### Business GET entry points
 - Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
@@ -44,6 +80,8 @@ DONE
   *patient: prid
   *tumour: trid
   *source: srid
+
+
 
 ## Local run
 - Main class: CanRegApiApplication

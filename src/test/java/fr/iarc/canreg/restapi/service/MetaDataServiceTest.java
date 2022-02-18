@@ -1,5 +1,6 @@
 package fr.iarc.canreg.restapi.service;
 
+import canreg.common.checks.CheckRecordService;
 import canreg.common.database.Dictionary;
 import canreg.server.database.CanRegDAO;
 import fr.iarc.canreg.restapi.exception.ServerException;
@@ -33,6 +34,9 @@ class MetaDataServiceTest {
 
     @MockBean
     private CanRegDAO canRegDAO;
+
+    @MockBean
+    private CheckRecordService checkRecordService;
     
     @Autowired
     private MetaDataService service;

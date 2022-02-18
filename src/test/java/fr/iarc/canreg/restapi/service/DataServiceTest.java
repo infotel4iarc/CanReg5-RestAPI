@@ -1,54 +1,55 @@
 package fr.iarc.canreg.restapi.service;
 
+import canreg.common.checks.CheckMessage;
+import canreg.common.checks.CheckRecordService;
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.CanRegDAO;
 import canreg.server.database.RecordLockedException;
-import fr.iarc.canreg.restapi.CanRegApiApplication;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
 import fr.iarc.canreg.restapi.exception.ServerException;
+import fr.iarc.canreg.restapi.exception.VariableErrorException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.security.Principal;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Test of DataService.
+ */
+@ExtendWith(MockitoExtension.class)
+class DataServiceTest {
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {CanRegApiApplication.class})
-@ContextConfiguration(classes = DataService.class)
-@ActiveProfiles("junit")
-public class DataServiceTest {
-
+    @InjectMocks
+    private DataService dataService;
     @Mock
     private Principal apiUserPrincipal;
-    @MockBean
+    @Mock
     private HoldingDbHandler holdingDbHandler;
     @Mock
     private Patient mockedPatient;
     @Mock
     private PatientDTO patientDTO;
-    @MockBean
+    @Mock
     private CanRegDAO canRegDAO;
-    @Autowired
-    private DataService dataService;
+    @Mock
+    private CheckRecordService checkRecordService;
 
     @Test
     void testGetPopulations() {
@@ -61,20 +62,85 @@ public class DataServiceTest {
     }
 
     @Test
-    void testSavePatient() throws RecordLockedException, SQLException {
+    void testSavePatient() throws SQLException, RecordLockedException {
 
         Patient patient = new Patient();
         patient.setVariable("prid", 1);
         patient.setVariable("famn", "Smith");
 
+        Patient patientDb = new Patient();
+        patientDb.setVariable("prid", 234);
+        patientDb.setVariable("famn", "Smith");
+        
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
-        Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(patient);
-        PatientDTO patientDTO = dataService.savePatient(new PatientDTO(patient), apiUserPrincipal);
-        Assertions.assertTrue(("Smith").equals(patientDTO.getVariables().get("famn")));
+        Mockito.when(checkRecordService.checkPatient(Mockito.any(Patient.class))).thenReturn(new ArrayList<>());
+        Mockito.when(canRegDAO.savePatient(Mockito.any(Patient.class))).thenReturn(1);
+        Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(patientDb);
+        
+        PatientDTO patientDTO = dataService.savePatient(PatientDTO.from(patient, null), apiUserPrincipal);
+        
+        Mockito.verify(canRegDAO, Mockito.times(1)).savePatient(Mockito.any(Patient.class));
+        Assertions.assertEquals("Smith", patientDTO.getVariables().get("famn"));
+        Assertions.assertEquals(234, patientDTO.getVariables().get("prid"));
+        Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_FORMAT_ERRORS));
+        Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_RAW_DATA));
     }
 
     @Test
-    void testSavePatientException() throws RecordLockedException, SQLException {
+    void testSavePatientWithWarning() throws SQLException, RecordLockedException {
+
+        Patient patient = new Patient();
+        patient.setVariable("prid", 1);
+        patient.setVariable("famn", "Smith");
+
+        Patient patientDb = new Patient();
+        patientDb.setVariable("prid", 234);
+        patientDb.setVariable("famn", "Smith");
+
+        List<CheckMessage> checkMessages = new ArrayList<>();
+        checkMessages.add(new CheckMessage("famn", "", "this variable is mandatory", false));
+        
+        Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
+        Mockito.when(checkRecordService.checkPatient(Mockito.any(Patient.class))).thenReturn(checkMessages);
+        Mockito.when(canRegDAO.savePatient(Mockito.any(Patient.class))).thenReturn(1);
+        Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(patientDb);
+
+        PatientDTO patientDTO = dataService.savePatient(PatientDTO.from(patient, null), apiUserPrincipal);
+
+        Mockito.verify(canRegDAO, Mockito.times(1)).savePatient(Mockito.any(Patient.class));
+        Assertions.assertEquals("Smith", patientDTO.getVariables().get("famn"));
+        Assertions.assertEquals(234, patientDTO.getVariables().get("prid"));
+        Assertions.assertEquals("[{level='warning', variable='famn', value='', message='this variable is mandatory'}]", 
+                patientDTO.getVariables().get(CheckRecordService.VARIABLE_FORMAT_ERRORS).toString());
+        Assertions.assertNull(patientDTO.getVariables().get(CheckRecordService.VARIABLE_RAW_DATA));
+    }
+
+    @Test
+    void testSavePatientWithError() throws SQLException, RecordLockedException {
+
+        Patient patient = new Patient();
+        patient.setVariable("prid", 1);
+        patient.setVariable("famn", "Smith");
+        patient.setVariable("birthd", "1905-01-20");
+
+        List<CheckMessage> checkMessages = new ArrayList<>();
+        checkMessages.add(new CheckMessage("birthd", "1905-01-20", "this date is not a valid date yyyyMMdd", true));
+
+        Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
+        Mockito.when(checkRecordService.checkPatient(Mockito.any(Patient.class))).thenReturn(checkMessages);
+
+        PatientDTO inputDto = PatientDTO.from(patient, null);
+        VariableErrorException exception = Assertions.assertThrows(VariableErrorException.class, 
+                () -> dataService.savePatient(inputDto, apiUserPrincipal));
+
+        Mockito.verify(canRegDAO, Mockito.times(0)).savePatient(Mockito.any(Patient.class));
+        Mockito.verify(canRegDAO, Mockito.times(0)).getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean());
+        Assertions.assertEquals("[{level='error', variable='birthd', value='1905-01-20', message='this date is not a valid date yyyyMMdd'}]",
+                exception.getMessage());
+    }
+    
+    @Test
+    void testSavePatientException() throws SQLException {
 
         Patient patient = new Patient();
         patient.setVariable("prid", 1);
@@ -83,15 +149,17 @@ public class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.savePatient(Mockito.any(Patient.class))).thenThrow(DerbySQLIntegrityConstraintViolationException.class);
 
-        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, () -> dataService.savePatient(new PatientDTO(patient), apiUserPrincipal));
+        PatientDTO inputDto = PatientDTO.from(patient, null);
+        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class, 
+                () -> dataService.savePatient(inputDto, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("Patient already exist"));
+        Assertions.assertTrue(exception.getMessage().contains("Patient already exists"));
 
     }
 
     @Test
-    void testSavePatientExceptionSQL() throws RecordLockedException, SQLException {
+    void testSavePatientExceptionSQL() throws SQLException {
 
         Patient patient = new Patient();
         patient.setVariable("prid", 1);
@@ -100,14 +168,16 @@ public class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.savePatient(Mockito.any(Patient.class))).thenThrow(SQLException.class);
 
-        ServerException exception = Assertions.assertThrows(ServerException.class, () -> dataService.savePatient(new PatientDTO(patient), apiUserPrincipal));
+        PatientDTO inputDto = PatientDTO.from(patient, null);
+        ServerException exception = Assertions.assertThrows(ServerException.class, 
+                () -> dataService.savePatient(inputDto, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains("Error while saving a Patient"));
     }
 
     @Test
-    void testSaveTumour() throws RecordLockedException, SQLException {
+    void testSaveTumour() throws RecordLockedException {
 
         Tumour tumour = new Tumour();
         tumour.setVariable("trid", 1);
@@ -117,11 +187,11 @@ public class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(tumour);
         TumourDTO tumourDTO = dataService.saveTumour(new TumourDTO(tumour), apiUserPrincipal);
-        Assertions.assertTrue(("RE").equals(tumourDTO.getVariables().get("extent")));
+        Assertions.assertEquals("RE", tumourDTO.getVariables().get("extent"));
     }
 
     @Test
-    void testSaveSource() throws RecordLockedException, SQLException {
+    void testSaveSource() throws RecordLockedException {
 
         Source source = new Source();
         source.setVariable("sourcerecordid", "2006601301010");
@@ -131,7 +201,7 @@ public class DataServiceTest {
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(canRegDAO.getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(source);
         SourceDTO sourceDTO = dataService.saveSource(new SourceDTO(source), apiUserPrincipal);
-        Assertions.assertTrue(("016").equals(sourceDTO.getVariables().get("source")));
+        Assertions.assertEquals("016", sourceDTO.getVariables().get("source"));
     }
 }
 

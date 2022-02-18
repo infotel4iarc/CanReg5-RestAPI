@@ -1,35 +1,26 @@
 package fr.iarc.canreg.restapi.model;
 
+import canreg.common.checks.CheckMessage;
 import canreg.common.database.Patient;
-import lombok.Getter;
-
-import java.io.Serializable;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import lombok.Getter;
 
 /**
  * Patient DTO.
  */
 @Getter
-public class PatientDTO  implements Serializable {
-    private  Map<String, Object> variables;
-
-    public PatientDTO() {
-    }
+public class PatientDTO extends DataDTO<Patient> {
 
     /**
-     * Constructor
+     * Builds a PatientDTO.
      * @param patient patient read in the database
+     * @param checkMessages warning messages, can be null or empty
      */
-    public PatientDTO(Patient patient) {
-        this.variables = new HashMap<>();
-        for(String variableName : patient.getVariableNames()) {
-            variables.put(variableName, patient.getVariable(variableName));
-        }
+    public static PatientDTO from(Patient patient, List<CheckMessage> checkMessages) {
+        PatientDTO patientDTO = new PatientDTO();
+        patientDTO.fill(patient, checkMessages);
+        return patientDTO;
     }
-
-
-
 
 }
