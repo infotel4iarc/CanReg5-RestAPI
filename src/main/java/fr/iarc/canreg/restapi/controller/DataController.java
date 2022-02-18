@@ -13,8 +13,6 @@ import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
 import fr.iarc.canreg.restapi.service.DataService;
-import java.security.Principal;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +21,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.security.Principal;
+import java.util.Map;
 
 /**
  * Controller to access to the data.
@@ -38,10 +40,10 @@ import springfox.documentation.annotations.ApiIgnore;
 public class DataController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataController.class);
-    
+
     @Autowired
     private DataService dataService;
-    
+
     /**
      * @return Map
      */
@@ -112,7 +114,7 @@ public class DataController {
 
         dbRecord = dataService.getTumour(recordID);
         LOGGER.info("dbRecord : {} ", dbRecord);
-        
+
         if (dbRecord == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -132,10 +134,10 @@ public class DataController {
         PatientDTO result;
         try {
             result = dataService.savePatient(patient, apiUser);
-            
+
         } catch (VariableErrorException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation failed: " + e.getMessage());
-            
+
         } catch (DuplicateRecordException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "The record already exists");
         }
@@ -187,9 +189,27 @@ public class DataController {
         } catch (DuplicateRecordException e) {
             source.getVariables().put("_error", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).body(source);
-        }catch(NotFoundException e) {
+        } catch (NotFoundException e) {
             source.getVariables().put("_error", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(source);
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /***
+     *
+     * @param populationDataset populationDataset
+     * @return PopulationDataset
+     * @throws RecordLockedException
+     */
+    @PostMapping(path = "/setPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PopulationDataset> setSource(@RequestBody PopulationDataset populationDataset) throws RecordLockedException {
+        PopulationDataset result = null;
+        try {
+            result = dataService.savePopulation(populationDataset);
+            LOGGER.info("PopulationDataset : {} ", result);
+        } catch (DuplicateRecordException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The population dataSet already Exist");
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

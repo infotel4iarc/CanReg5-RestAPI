@@ -6,6 +6,7 @@ import canreg.common.checks.CheckRecordService;
 import canreg.common.database.DatabaseRecord;
 import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
+import canreg.common.database.PopulationDatasetsEntry;
 import canreg.common.database.Source;
 import canreg.common.database.Tumour;
 import canreg.server.database.CanRegDAO;
@@ -212,5 +213,21 @@ public class DataService {
         } catch (SQLException e) {
             throw new ServerException("Error while saving a Source: " + e.getMessage(), e);
         }
+    }
+
+    public PopulationDataset savePopulation(PopulationDataset populationDataset) {
+
+
+
+        PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
+
+        if(populationDatasetExist!= null && populationDataset.getPopulationDatasetName().equals(populationDatasetExist.getPopulationDatasetName())){
+
+           throw new DuplicateRecordException("The population dataSet alreadyExist");
+        }
+        int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
+
+        return getPopulation(returnedId);
+
     }
 }
