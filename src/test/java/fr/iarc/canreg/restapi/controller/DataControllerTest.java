@@ -1,10 +1,16 @@
 package fr.iarc.canreg.restapi.controller;
 
+import canreg.common.Globals;
 import canreg.common.checks.CheckRecordService;
 import canreg.common.database.Patient;
 import canreg.common.database.User;
+import canreg.server.database.CanRegDAO;
+import fr.iarc.canreg.restapi.model.PatientDTO;
+import fr.iarc.canreg.restapi.security.config.WebSecurityConfig;
+import fr.iarc.canreg.restapi.security.service.CanregDbDetailService;
 import fr.iarc.canreg.restapi.service.DataService;
 import fr.iarc.canreg.restapi.service.HoldingDbHandler;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -23,14 +29,17 @@ import org.springframework.web.context.WebApplicationContext;
 
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {DataController.class})
+@ContextConfiguration(classes = {DataController.class, CanregDbDetailService.class, WebSecurityConfig.class})
 @AutoConfigureMockMvc
-@WebMvcTest(properties = "server.error.include-message=always")
-@WithMockUser(roles = "ANALYST")
+@WebMvcTest(properties = {"server.error.include-message=always", "role=ANALYST"})
+@WithMockUser(value = "junituser", roles = "ANALYST")
 class DataControllerTest {
 
     @Autowired
-    DataController controller;
+    private DataController controller;
+
+    @MockBean
+    private static CanRegDAO canRegDAO;
 
     @MockBean
     private DataService dataService;
@@ -47,13 +56,19 @@ class DataControllerTest {
     @Autowired
     private WebApplicationContext context;
 
+    @BeforeEach
+    void beforeEach() {
+        User user = new User();
+        user.setUserName("junituser");
+        user.setUserRightLevel(Globals.UserRightLevels.ANALYST);
+        Mockito.when(canRegDAO.getUserByUsername("junituser")).thenReturn(user);
+    }
+    
     @Test
     void testGetPatientFound() throws Exception {
         Patient patient = new Patient();
         patient.setVariable("regno", "20044892");
         patient.setVariable("famn", "Smith");
-        User user = new User();
-        user.setUserName("apiUser");
         Mockito.when(dataService.getPatient(123)).thenReturn(patient);
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -77,11 +92,43 @@ class DataControllerTest {
         Mockito.verify(dataService).getPatient(123);
     }
 
+    @Test
+    void testCreatePatient() throws Exception {
+        Patient patient = new Patient();
+        patient.setVariable("regno", "20044892");
+        patient.setVariable("famn", "Smith");
+        
+        PatientDTO resultPatient = PatientDTO.from(patient, null);
+        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenReturn(resultPatient);
+        
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/patients")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content("" +
+                                "{" +
+                                "  \"variables\": {" +
+                                "    \"regno\": \"20044892\"," +
+                                "    \"sex\": \"2\"," +
+                                "    \"patientupdatedby\": \"userjunit\"," +
+                                "    \"famn\": \"Smith\"," +
+                                "    \"patientupdatedate\": \"20110510\"," +
+                                "    \"patientrecordid\": \"2004489201\"," +
+                                "    \"birthd\": \"20150120\"" +
+                                "  }" +
+                                "}")
+                ).andExpect(MockMvcResultMatchers.status().isCreated())
+                // .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables").hasJsonPath())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.regno").value("20044892"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.famn").value("Smith"))
+        ;
+        Mockito.verify(dataService, Mockito.times(0)).getPatient(Mockito.any());
+    }
 
     @Test
     void testGetSourcesNotFound() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.get("/api/sources/12"))
+                        MockMvcRequestBuilders.get("/api/sources/12"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
         Mockito.verify(dataService).getSource(12);
 

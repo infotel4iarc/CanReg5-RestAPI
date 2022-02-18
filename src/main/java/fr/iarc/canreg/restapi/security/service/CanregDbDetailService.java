@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public class CanregDbDetailService implements UserDetailsService {
 
     @Autowired
-    CanRegDAO canRegDAO;
+    private CanRegDAO canRegDAO;
 
     /**
      * Role required to connect to CanReg API

@@ -131,7 +131,7 @@ public class DataController {
      * @param apiUser user
      * @return PatientDTO or an error
      */
-    @PostMapping(path = "/setPatients", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/patients", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PatientDTO> createPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
         PatientDTO result;
         try {
@@ -152,7 +152,7 @@ public class DataController {
      * @param apiUser api user
      * @return tumourDto
      */
-    @PostMapping(path = "/setTumour", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/tumours", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TumourDTO> createTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
         TumourDTO result = null;
         try {
@@ -177,7 +177,7 @@ public class DataController {
      * @param apiUser api user
      * @return sourceDto
      */
-    @PostMapping(path = "/setSource", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/sources", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SourceDTO> createSource(@RequestBody SourceDTO source, @ApiIgnore Principal apiUser) {
         SourceDTO result = null;
         try {
@@ -201,7 +201,7 @@ public class DataController {
      * @param populationDataset populationDataset
      * @return PopulationDataset
      */
-    @PostMapping(path = "/setPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/populations", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PopulationDataset> createPopulation(@RequestBody PopulationDataset populationDataset) {
         PopulationDataset result = null;
         try {
