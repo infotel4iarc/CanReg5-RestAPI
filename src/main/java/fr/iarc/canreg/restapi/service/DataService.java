@@ -135,11 +135,8 @@ public class DataService {
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
             
             // Check the patient
-            List<CheckMessage> checkMessages = checkRecordService.checkPatient(patient);
-            if (!checkMessages.isEmpty() && checkMessages.stream().anyMatch(CheckMessage::isError)) {
-                // Validation error
-                throw new VariableErrorException(checkMessages.toString());
-            }
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
+            
             // no message or warning only
             int returnedId = dao.savePatient(patient);
             return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
@@ -168,8 +165,12 @@ public class DataService {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             tumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, null);
+
+            // Check the tumour
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(tumour));
+            
             int returnedId = dao.saveTumour(tumour);
-            return new TumourDTO((Tumour) getRecord(returnedId, dao, Globals.TUMOUR_TABLE_NAME));
+            return TumourDTO.from((Tumour) getRecord(returnedId, dao, Globals.TUMOUR_TABLE_NAME), checkMessages);
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             if (e.getSQLState().equals("23503")) {
                 LOGGER.error("Patient does not exist: {} ", e.getMessage(), e);
@@ -199,12 +200,17 @@ public class DataService {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             source.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, null);
+
+            // Check the source
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkSource(source));
+            
             int returnedId = dao.saveSource(source);
-            return new SourceDTO((Source) getRecord(returnedId, dao, Globals.SOURCE_TABLE_NAME));
+            return SourceDTO.from((Source) getRecord(returnedId, dao, Globals.SOURCE_TABLE_NAME), checkMessages);
+            
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             if (e.getSQLState().equals("23503")) {
-                LOGGER.error("Tumour does not exist :{} ", e.getMessage(), e);
-                throw new NotFoundException("Tumour not exist :" + e.getMessage(), e);
+                LOGGER.error("Tumour does not exist: {} ", e.getMessage(), e);
+                throw new NotFoundException("Tumour does not exist: " + e.getMessage(), e);
             } else {
                 LOGGER.error("Source already exists :{} ", e.getMessage(), e);
                 throw new DuplicateRecordException("Source already exists: " + e.getMessage(), e);
@@ -228,5 +234,13 @@ public class DataService {
 
         return getPopulation(returnedId);
 
+    }
+
+    private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {
+        if (!checkMessages.isEmpty() && checkMessages.stream().anyMatch(CheckMessage::isError)) {
+            // Validation error
+            throw new VariableErrorException(checkMessages.toString());
+        }
+        return checkMessages;
     }
 }

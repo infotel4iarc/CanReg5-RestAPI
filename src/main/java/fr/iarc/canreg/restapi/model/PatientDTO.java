@@ -2,6 +2,7 @@ package fr.iarc.canreg.restapi.model;
 
 import canreg.common.checks.CheckMessage;
 import canreg.common.database.Patient;
+import java.io.Serializable;
 import java.util.List;
 import lombok.Getter;
 
@@ -9,7 +10,7 @@ import lombok.Getter;
  * Patient DTO.
  */
 @Getter
-public class PatientDTO extends DataDTO<Patient> {
+public class PatientDTO extends DataDTO<Patient> implements Serializable {
 
     /**
      * Builds a PatientDTO.

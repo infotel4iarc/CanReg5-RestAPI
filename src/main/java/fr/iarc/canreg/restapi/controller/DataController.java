@@ -39,6 +39,7 @@ import java.util.Map;
 public class DataController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataController.class);
+    public static final String VALIDATION_FAILED = "Validation failed: ";
 
     @Autowired
     private DataService dataService;
@@ -82,7 +83,7 @@ public class DataController {
 
         dbRecord = dataService.getPatient(recordID);
         if (dbRecord == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient nor found: " + recordID);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found: " + recordID);
         }
 
         // with recordId and map of variables
@@ -102,7 +103,7 @@ public class DataController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>(new SourceDTO(dbRecord), HttpStatus.OK);
+        return new ResponseEntity<>(SourceDTO.from(dbRecord, null), HttpStatus.OK);
     }
 
     /**
@@ -120,7 +121,7 @@ public class DataController {
         if (dbRecord == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(new TumourDTO(dbRecord), HttpStatus.OK);
+        return new ResponseEntity<>(TumourDTO.from(dbRecord, null), HttpStatus.OK);
     }
 
 
@@ -138,10 +139,10 @@ public class DataController {
             result = dataService.savePatient(patient, apiUser);
 
         } catch (VariableErrorException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation failed: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
 
         } catch (DuplicateRecordException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "The record already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The patient already exists");
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -157,16 +158,19 @@ public class DataController {
         TumourDTO result = null;
         try {
             result = dataService.saveTumour(tumour, apiUser);
-            LOGGER.info("tumour : {} ", result);
-        } catch (RecordLockedException e) {
-            LOGGER.error("error : {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.LOCKED);
+
+        } catch (VariableErrorException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
+
         } catch (DuplicateRecordException e) {
-            tumour.getVariables().put("_error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(tumour);
-        }catch(NotFoundException e) {
-            tumour.getVariables().put("_error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(tumour);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The record already exists");
+
+        } catch (RecordLockedException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+            
+        } catch(NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "A record is not found");
+            
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -183,15 +187,19 @@ public class DataController {
         try {
             result = dataService.saveSource(source, apiUser);
             LOGGER.info("source : {} ", result);
-        } catch (RecordLockedException e) {
-            LOGGER.error("error : {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.LOCKED);
+            
+        } catch (VariableErrorException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
+
         } catch (DuplicateRecordException e) {
-            source.getVariables().put("_error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(source);
-        } catch (NotFoundException e) {
-            source.getVariables().put("_error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(source);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The source already exists");
+
+        } catch (RecordLockedException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+
+        } catch(NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "A record is not found");
+
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

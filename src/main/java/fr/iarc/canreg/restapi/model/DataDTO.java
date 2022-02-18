@@ -24,6 +24,7 @@ public class DataDTO<T extends DatabaseRecord> implements Serializable {
     /** 
      * Variables that are cleaned during the fill of a DTO: <br>
      * - Globals.SystemVariableNames: PRID, TRID, NEXT_RECORD_DB_ID, LAST_RECORD_DB_ID
+     * - SOURCE_TABLE_RECORD_ID_VARIABLE_NAME: srid
      * - CheckRecordService.VARIABLE_RAW_DATA: raw_data
      * - CheckRecordService.VARIABLE_FORMAT_ERRORS: format_errors
      */
@@ -31,6 +32,7 @@ public class DataDTO<T extends DatabaseRecord> implements Serializable {
     
     static {
         Arrays.stream(Globals.SystemVariableNames.values()).forEach(n -> TECHNICAL_VARIABLES.add(n.name()));
+        TECHNICAL_VARIABLES.add(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME);
         TECHNICAL_VARIABLES.add(CheckRecordService.VARIABLE_RAW_DATA);
         TECHNICAL_VARIABLES.add(CheckRecordService.VARIABLE_FORMAT_ERRORS);
     }
