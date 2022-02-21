@@ -134,15 +134,23 @@ public class DataService {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
-            // Check the patient
+            // Check the input data for the patient
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
+
+            // Check if the patient already exists for the Registry Number
+            int nbForPatientId = dao.countPatientByPatientID(patient);
+            if(nbForPatientId > 0) {
+                throw new DuplicateRecordException("Patient already exists with the same " 
+                        + dao.getPatientIDVariableName());
+            }
 
             // no message or warning only
             int returnedId = dao.savePatient(patient);
             return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
-            throw new DuplicateRecordException("Patient already exists:" + e.getMessage(), e);
+            throw new DuplicateRecordException("Patient already exists with the same " + 
+                    Globals.StandardVariableNames.PatientRecordID, e);
 
         } catch (SQLException e) {
             throw new ServerException("Error while saving a Patient: " + e.getMessage(), e);

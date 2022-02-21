@@ -107,7 +107,32 @@ class DataServicePatientTest extends DataServiceParentForJunit {
     }
 
     @Test
-    void testSavePatientException() throws SQLException {
+    void testSavePatientExistsWithSameRegno() throws SQLException, RecordLockedException {
+
+        Patient patient = new Patient();
+        patient.setVariable("regno", 123);
+        patient.setVariable("famn", "Smith");
+        patient.setVariable("birthd", "19050120");
+
+        List<CheckMessage> checkMessages = new ArrayList<>();
+
+        Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
+        Mockito.when(checkRecordService.checkPatient(Mockito.any(Patient.class))).thenReturn(checkMessages);
+        Mockito.when(canRegDAO.countPatientByPatientID(Mockito.any(Patient.class))).thenReturn(1);
+        Mockito.when(canRegDAO.getPatientIDVariableName()).thenReturn("RegNo");
+        
+        PatientDTO inputDto = PatientDTO.from(patient, null);
+        DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class,
+                () -> dataService.savePatient(inputDto, apiUserPrincipal));
+
+        Mockito.verify(canRegDAO, Mockito.times(0)).savePatient(Mockito.any(Patient.class));
+        Mockito.verify(canRegDAO, Mockito.times(0)).getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean());
+        Assertions.assertEquals("Patient already exists with the same RegNo",
+                exception.getMessage());
+    }
+
+    @Test
+    void testSavePatientExistsWithSamePatientRecordID() throws SQLException {
 
         Patient patient = new Patient();
         patient.setVariable("prid", 1);
@@ -121,7 +146,8 @@ class DataServicePatientTest extends DataServiceParentForJunit {
                 () -> dataService.savePatient(inputDto, apiUserPrincipal));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("Patient already exists"));
+        Assertions.assertEquals("Patient already exists with the same PatientRecordID",
+                exception.getMessage());
 
     }
 

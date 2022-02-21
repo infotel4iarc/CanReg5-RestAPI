@@ -144,7 +144,7 @@ public class DataController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
 
         } catch (DuplicateRecordException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "The patient already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -230,7 +230,7 @@ public class DataController {
      * @throws RecordLockedException
      */
     @PutMapping(path = "/editPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PopulationDataset> editPopulation(@RequestBody PopulationDataset populationDataset) throws RecordLockedException {
+    public ResponseEntity<PopulationDataset> editPopulation(@RequestBody PopulationDataset populationDataset) {
         PopulationDataset result = null;
         try {
             result = dataService.editPopulation(populationDataset);
