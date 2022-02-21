@@ -8,6 +8,7 @@ import canreg.common.database.Tumour;
 import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
 import fr.iarc.canreg.restapi.exception.NotFoundException;
+import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.exception.VariableErrorException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -217,6 +219,26 @@ public class DataController {
             LOGGER.info("PopulationDataset : {} ", result);
         } catch (DuplicateRecordException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "The population dataSet already Exist");
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /***
+     *
+     * @param populationDataset populationDataset
+     * @return PopulationDataset
+     * @throws RecordLockedException
+     */
+    @PutMapping(path = "/editPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PopulationDataset> editPopulation(@RequestBody PopulationDataset populationDataset) throws RecordLockedException {
+        PopulationDataset result = null;
+        try {
+            result = dataService.editPopulation(populationDataset);
+            LOGGER.info("PopulationDataset : {} ", result);
+        } catch (ServerException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while deleting a population ");
+        }catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The population dataSet not Exist");
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }

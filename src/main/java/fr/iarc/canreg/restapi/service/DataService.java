@@ -17,7 +17,6 @@ import fr.iarc.canreg.restapi.exception.VariableErrorException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
-import java.util.List;
 import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -133,10 +133,10 @@ public class DataService {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
-            
+
             // Check the patient
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
-            
+
             // no message or warning only
             int returnedId = dao.savePatient(patient);
             return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
@@ -168,7 +168,7 @@ public class DataService {
 
             // Check the tumour
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(tumour));
-            
+
             int returnedId = dao.saveTumour(tumour);
             return TumourDTO.from((Tumour) getRecord(returnedId, dao, Globals.TUMOUR_TABLE_NAME), checkMessages);
         } catch (DerbySQLIntegrityConstraintViolationException e) {
@@ -203,10 +203,10 @@ public class DataService {
 
             // Check the source
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkSource(source));
-            
+
             int returnedId = dao.saveSource(source);
             return SourceDTO.from((Source) getRecord(returnedId, dao, Globals.SOURCE_TABLE_NAME), checkMessages);
-            
+
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             if (e.getSQLState().equals("23503")) {
                 LOGGER.error("Tumour does not exist: {} ", e.getMessage(), e);
@@ -220,20 +220,41 @@ public class DataService {
         }
     }
 
-    public PopulationDataset savePopulation(PopulationDataset populationDataset) {
-
-
-
+    /**
+     * Save a population.<br>
+     *
+     * @param PopulationDataset populationDataset
+     * @return the PopulationDataset object with the generated ids <br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public PopulationDataset savePopulation(PopulationDataset populationDataset){
         PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
 
-        if(populationDatasetExist!= null && populationDataset.getPopulationDatasetName().equals(populationDatasetExist.getPopulationDatasetName())){
-
-           throw new DuplicateRecordException("The population dataSet alreadyExist");
+        if (populationDatasetExist != null && populationDataset.getPopulationDatasetName().equals(populationDatasetExist.getPopulationDatasetName())) {
+            throw new DuplicateRecordException("The population dataSet already exists");
         }
         int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
-
         return getPopulation(returnedId);
+    }
 
+    /**
+     * edit a population.<br>
+     *
+     * @param PopulationDataset populationDataset
+     * @return the PopulationDataset object <br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public PopulationDataset editPopulation(PopulationDataset populationDataset) {
+        PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
+        if (populationDatasetExist == null) {
+            throw new NotFoundException("The population dataSet not exists");
+        }
+        boolean succes = canRegDAO.deletePopulationDataSet(populationDataset.getPopulationDatasetID());
+        if (!succes) {
+            throw new ServerException("Error while deleting a population");
+        }
+        int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
+        return getPopulation(returnedId);
     }
 
     private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {

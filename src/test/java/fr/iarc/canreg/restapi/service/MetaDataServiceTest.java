@@ -3,6 +3,7 @@ package fr.iarc.canreg.restapi.service;
 import canreg.common.checks.CheckRecordService;
 import canreg.common.database.Dictionary;
 import canreg.server.database.CanRegDAO;
+import fr.iarc.canreg.restapi.controller.DataController;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.File;
 import java.io.IOException;
