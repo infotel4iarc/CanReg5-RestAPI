@@ -224,7 +224,7 @@ public class DataController {
     }
 
     /***
-     *
+     * update a population dataset.
      * @param populationDataset populationDataset
      * @return PopulationDataset
      * @throws RecordLockedException

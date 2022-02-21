@@ -140,7 +140,7 @@ public class DataService {
             // Check if the patient already exists for the Registry Number
             int nbForPatientId = dao.countPatientByPatientID(patient);
             if(nbForPatientId > 0) {
-                throw new DuplicateRecordException("Patient already exists with the same " 
+                throw new DuplicateRecordException("Patient already exists with the same "
                         + dao.getPatientIDVariableName());
             }
 
@@ -149,7 +149,7 @@ public class DataService {
             return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
-            throw new DuplicateRecordException("Patient already exists with the same " + 
+            throw new DuplicateRecordException("Patient already exists with the same " +
                     Globals.StandardVariableNames.PatientRecordID, e);
 
         } catch (SQLException e) {
