@@ -3,12 +3,13 @@ package fr.iarc.canreg.restapi.controller;
 import canreg.common.Globals;
 import canreg.common.checks.CheckMessage;
 import canreg.common.checks.CheckRecordService;
-import canreg.common.database.Patient;
+import canreg.common.database.Source;
 import canreg.common.database.User;
 import canreg.server.database.CanRegDAO;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
+import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.exception.VariableErrorException;
-import fr.iarc.canreg.restapi.model.PatientDTO;
+import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.security.config.WebSecurityConfig;
 import fr.iarc.canreg.restapi.security.service.CanregDbDetailService;
 import fr.iarc.canreg.restapi.service.DataService;
@@ -38,7 +39,7 @@ import org.springframework.web.context.WebApplicationContext;
 @AutoConfigureMockMvc
 @WebMvcTest(properties = {"server.error.include-message=always", "role=ANALYST"})
 @WithMockUser(value = "junituser", roles = "ANALYST")
-class DataControllerPatientTest {
+class DataControllerSourceTest {
 
     @Autowired
     private DataController controller;
@@ -70,111 +71,114 @@ class DataControllerPatientTest {
     }
     
     @Test
-    void testGetPatientFound() throws Exception {
-        Patient patient = new Patient();
-        patient.setVariable("regno", "20044892");
-        patient.setVariable("famn", "Smith");
-        Mockito.when(dataService.getPatient(123)).thenReturn(patient);
+    void testGetSourceFound() throws Exception {
+        Source tumour = new Source();
+        tumour.setVariable("sourcerecordid", "199920920101");
+        Mockito.when(dataService.getSource(123)).thenReturn(tumour);
         mockMvc.perform(
                         MockMvcRequestBuilders
-                                .get("/api/patients/123")
+                                .get("/api/sources/123")
                 ).andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.variables").hasJsonPath())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.regno").value("20044892"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.famn").value("Smith"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.sourcerecordid").value("199920920101"))
         ;
-        Mockito.verify(dataService).getPatient(123);
+        Mockito.verify(dataService).getSource(123);
     }
 
     @Test
-    void testGetPatientNotFound() throws Exception {
-        mockMvc.perform(
-                        MockMvcRequestBuilders.get("/api/patients/123")
-                )
+    void testGetSourceNotFound() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/sources/123"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
         ;
-        Mockito.verify(dataService).getPatient(123);
+        Mockito.verify(dataService).getSource(123);
     }
 
     @Test
-    void testCreatePatient() throws Exception {
-        Patient patient = new Patient();
-        patient.setVariable("regno", "20044892");
-        patient.setVariable("famn", "Smith");
+    void testCreateSource() throws Exception {
+        Source tumour = new Source();
+        tumour.setVariable("sourcerecordid", "199920920101");
         
-        PatientDTO resultPatient = PatientDTO.from(patient, null);
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenReturn(resultPatient);
+        SourceDTO result = SourceDTO.from(tumour, null);
+        Mockito.when(dataService.saveSource(Mockito.argThat(argument -> "199920920101".equals(argument.getVariables().get("sourcerecordid"))), Mockito.any())).thenReturn(result);
         
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/patients")
+                        .post("/api/sources")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content("" +
-                                "{" +
+                        .content("{" +
                                 "  \"variables\": {" +
-                                "    \"regno\": \"20044892\"," +
-                                "    \"sex\": \"2\"," +
-                                "    \"patientupdatedby\": \"userjunit\"," +
-                                "    \"famn\": \"Smith\"," +
-                                "    \"patientupdatedate\": \"20110510\"," +
-                                "    \"patientrecordid\": \"2004489201\"," +
-                                "    \"birthd\": \"20150120\"" +
+                                "    \"sourcerecordid\": \"199920920101\"," +
+                                "    \"source\": \"74\"" +
                                 "  }" +
                                 "}")
                 ).andExpect(MockMvcResultMatchers.status().isCreated())
-                // .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.variables").hasJsonPath())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.regno").value("20044892"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.famn").value("Smith"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.variables.sourcerecordid").value("199920920101"))
         ;
-        Mockito.verify(dataService, Mockito.times(0)).getPatient(Mockito.any());
+        Mockito.verify(dataService, Mockito.times(0)).getSource(Mockito.any());
     }
 
     @Test
-    void testCreatePatientWithError() throws Exception {
+    void testCreateSourceWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
-        checkMessages.add(new CheckMessage("birthd", "1905-01-20", "this date is not a valid date yyyyMMdd", true));
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
+        checkMessages.add(new CheckMessage("age", "89", "this value is not an integer", true));
+        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/patients")
+                        .post("/api/sources")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content("" +
-                                "{" +
+                        .content("{" +
                                 "  \"variables\": {" +
-                                "    \"regno\": \"20044892\"," +
-                                "    \"sex\": \"2\"," +
-                                "    \"patientupdatedby\": \"userjunit\"," +
-                                "    \"famn\": \"Smith\"," +
-                                "    \"patientupdatedate\": \"20110510\"," +
-                                "    \"patientrecordid\": \"2004489201\"," +
-                                "    \"birthd\": \"1905-01-20\"" +
+                                "    \"sourcerecordid\": \"199920920101\"," +
+                                "    \"source\": \"74\"," +
+                                "    \"age\": \"89\"" +
                                 "  }" +
                                 "}")
                 ).andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.status().reason(
-                        "Validation failed: [{level='error', variable='birthd', value='1905-01-20', message='this date is not a valid date yyyyMMdd'}]"))
+                        "Validation failed: [{level='error', variable='age', value='89', message='this value is not an integer'}]"))
         ;
-        Mockito.verify(dataService, Mockito.times(0)).getPatient(Mockito.any());
+        Mockito.verify(dataService, Mockito.times(0)).getSource(Mockito.any());
     }
 
     @Test
-    void testCreatePatientExists() throws Exception {
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Patient exists"));
+    void testCreateSourceExists() throws Exception {
+        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Source exists"));
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/patients")
+                        .post("/api/sources")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content("" +
-                                "{" +
+                        .content("{" +
                                 "  \"variables\": {" +
-                                "    \"regno\": \"20044892\"" +
+                                "    \"sourcerecordid\": \"199920920101\"," +
+                                "    \"source\": \"74\"," +
+                                "    \"age\": \"89\"" +
                                 "  }" +
                                 "}")
                 ).andExpect(MockMvcResultMatchers.status().isConflict())
-                .andExpect(MockMvcResultMatchers.status().reason("The Patient exists"))
+                .andExpect(MockMvcResultMatchers.status().reason("The source already exists"))
         ;
-        Mockito.verify(dataService, Mockito.times(0)).getPatient(Mockito.any());
+        Mockito.verify(dataService, Mockito.times(0)).getSource(Mockito.any());
+    }
+
+    @Test
+    void testCreateSourceTumourNotFound() throws Exception {
+        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new NotFoundException("The Tumour does not exist"));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post("/api/sources")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content("{" +
+                                "  \"variables\": {" +
+                                "    \"sourcerecordid\": \"199920920101\"," +
+                                "    \"source\": \"74\"," +
+                                "    \"age\": \"89\"" +
+                                "  }" +
+                                "}")
+                ).andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.status().reason("A record is not found"))
+        ;
+        Mockito.verify(dataService, Mockito.times(0)).getSource(Mockito.any());
     }
 
 

@@ -19,13 +19,13 @@ DONE
       }
     ]
     ```
-  - 409: patient already exists
+  - 409: patient already exists with the same RegNo, or with the same PatientRecordID
     ```
     {
       "timestamp": 1645171082093,
       "status": 409,
       "error": "Conflict",
-      "message": "The record already exists",
+      "message": "Patient already exists with the same RegNo",
       "path": "/api/setPatients"
     }    
     ```
@@ -41,12 +41,14 @@ DONE
     ```
 - POST /api/tumour: create a tumour 
   - 201: tumour created
+  - 400: validation error
   - 404: the linked patient is not found
   - 409: tumour already exists
 - POST /api/source: create a source
-    - 201: source created
-    - 404: the linked tumour is not found
-    - 409: source already exists
+  - 201: source created
+  - 400: validation error
+  - 404: the linked tumour is not found
+  - 409: source already exists
 - POST /api/population: create a new population dataset
   - creates a new dataset in the main database
   - uses the same json structure as the export of a dataset in CanReg5

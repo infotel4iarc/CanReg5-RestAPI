@@ -165,7 +165,7 @@ public class DataController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
 
         } catch (DuplicateRecordException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "The record already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The tumour already exists");
 
         } catch (RecordLockedException e) {
             throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
