@@ -215,10 +215,10 @@ public class DataController {
     public ResponseEntity<PopulationDataset> createPopulation(@RequestBody PopulationDataset populationDataset) {
         PopulationDataset result = null;
         try {
-            result = dataService.savePopulation(populationDataset);
+            result = dataService.createPopulation(populationDataset);
             LOGGER.info("PopulationDataset : {} ", result);
         } catch (DuplicateRecordException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "The population dataSet already Exist");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The population dataSet already exists");
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -227,9 +227,8 @@ public class DataController {
      * update a population dataset.
      * @param populationDataset populationDataset
      * @return PopulationDataset
-     * @throws RecordLockedException
      */
-    @PutMapping(path = "/editPopulation", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(path = "/populations", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PopulationDataset> editPopulation(@RequestBody PopulationDataset populationDataset) {
         PopulationDataset result = null;
         try {
@@ -238,8 +237,8 @@ public class DataController {
         } catch (ServerException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while deleting a population ");
         }catch (NotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The population dataSet not Exist");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The population dataSet does not Exist");
         }
-        return new ResponseEntity<>(result, HttpStatus.CREATED);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

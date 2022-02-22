@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test of DataService for Patient.
+ * Test of DataService for Population dataset.
  */
 @ExtendWith(MockitoExtension.class)
 class DataServicePopulationTest extends DataServiceParentForJunit {
@@ -38,7 +38,7 @@ class DataServicePopulationTest extends DataServiceParentForJunit {
         mapPopulationDatasetDb.put(0, populationDatasetDb);
         Mockito.when(dataService.getPopulations()).thenReturn(mapPopulationDataset);
 
-        PopulationDataset result = dataService.savePopulation(populationDataset);
+        PopulationDataset result = dataService.createPopulation(populationDataset);
 
         Mockito.verify(canRegDAO, Mockito.times(1)).saveNewPopulationDataset(Mockito.any(PopulationDataset.class));
         Assertions.assertEquals(10, result.getPopulationDatasetID());
@@ -64,7 +64,7 @@ class DataServicePopulationTest extends DataServiceParentForJunit {
 
 
         DuplicateRecordException exception = Assertions.assertThrows(DuplicateRecordException.class,
-                () -> dataService.savePopulation(populationDataset));
+                () -> dataService.createPopulation(populationDataset));
 
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains("The population dataSet already exists"));
@@ -86,13 +86,10 @@ class DataServicePopulationTest extends DataServiceParentForJunit {
 
         Map<Integer, PopulationDataset> mapPopulationDatasetDb = new HashMap<>();
         mapPopulationDatasetDb.put(0, populationDatasetDb);
-        Mockito.when(dataService.getPopulations()).thenReturn(mapPopulationDataset);
-        Mockito.when(canRegDAO.deletePopulationDataSet(Mockito.anyInt())).thenReturn(Boolean.TRUE);
-        Mockito.when(canRegDAO.saveNewPopulationDataset(populationDataset)).thenReturn(1);
+        Mockito.when(canRegDAO.updatePopulationDataset(populationDataset)).thenReturn(populationDataset.getPopulationDatasetID());
         PopulationDataset result = dataService.editPopulation(populationDataset);
 
-        Mockito.verify(canRegDAO, Mockito.times(1)).deletePopulationDataSet(Mockito.any(Integer.class));
-        Mockito.verify(canRegDAO, Mockito.times(1)).saveNewPopulationDataset(Mockito.any(PopulationDataset.class));
+        Mockito.verify(canRegDAO, Mockito.times(1)).updatePopulationDataset(Mockito.any(PopulationDataset.class));
         Assertions.assertEquals(1, result.getPopulationDatasetID());
     }
 
@@ -112,15 +109,13 @@ class DataServicePopulationTest extends DataServiceParentForJunit {
         Map<Integer, PopulationDataset> mapPopulationDatasetDb = new HashMap<>();
         mapPopulationDatasetDb.put(0, populationDatasetDb);
 
-
-        Mockito.when(dataService.getPopulations()).thenReturn(mapPopulationDatasetDb);
-
+        Mockito.when(canRegDAO.updatePopulationDataset(populationDataset)).thenReturn(-1);
 
         NotFoundException exception = Assertions.assertThrows(NotFoundException.class,
                 () -> dataService.editPopulation(populationDataset));
 
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains("The population dataSet not exists"));
+        Assertions.assertTrue(exception.getMessage().contains("The population dataSet does not exist"));
 
     }
 
@@ -141,8 +136,7 @@ class DataServicePopulationTest extends DataServiceParentForJunit {
         Map<Integer, PopulationDataset> mapPopulationDatasetDb = new HashMap<>();
         mapPopulationDatasetDb.put(1, populationDatasetDb);
 
-        Mockito.when(dataService.getPopulations()).thenReturn(mapPopulationDatasetDb);
-        Mockito.when(canRegDAO.deletePopulationDataSet(Mockito.anyInt())).thenReturn(Boolean.FALSE);
+        Mockito.when(canRegDAO.updatePopulationDataset(Mockito.any(PopulationDataset.class))).thenThrow(SQLException.class);;
 
         ServerException exception = Assertions.assertThrows(ServerException.class,
                 () -> dataService.editPopulation(populationDataset));

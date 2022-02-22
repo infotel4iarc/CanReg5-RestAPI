@@ -229,16 +229,18 @@ public class DataService {
     }
 
     /**
-     * Save a population.<br>
+     * Create a population.<br>
      *
-     * @param PopulationDataset populationDataset
+     * @param populationDataset populationDataset
      * @return the PopulationDataset object with the generated ids <br>
-     * @throws RecordLockedException if the record is locked, should not happen
+     * @throws DuplicateRecordException if the record already exists for the populationDatasetIDn
      */
-    public PopulationDataset savePopulation(PopulationDataset populationDataset){
+    public PopulationDataset createPopulation(PopulationDataset populationDataset) {
         PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
 
-        if (populationDatasetExist != null && populationDataset.getPopulationDatasetName().equals(populationDatasetExist.getPopulationDatasetName())) {
+        if (populationDatasetExist != null 
+                && populationDataset.getPopulationDatasetName().equals(
+                        populationDatasetExist.getPopulationDatasetName())) {
             throw new DuplicateRecordException("The population dataSet already exists");
         }
         int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
@@ -246,23 +248,25 @@ public class DataService {
     }
 
     /**
-     * edit a population.<br>
+     * Edit an existing population dataset.<br>
      *
-     * @param PopulationDataset populationDataset
+     * @param populationDataset populationDataset with populationDatasetID set.
      * @return the PopulationDataset object <br>
-     * @throws RecordLockedException if the record is locked, should not happen
+     * @throws NotFoundException if the record is not found with the populationDatasetID
+     * @throws ServerException if the delete before insert fails
      */
     public PopulationDataset editPopulation(PopulationDataset populationDataset) {
-        PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
-        if (populationDatasetExist == null) {
-            throw new NotFoundException("The population dataSet not exists");
-        }
-        boolean succes = canRegDAO.deletePopulationDataSet(populationDataset.getPopulationDatasetID());
-        if (!succes) {
+        try {
+            int result = canRegDAO.updatePopulationDataset(populationDataset);
+
+            if (result == -1) {
+                throw new NotFoundException("The population dataSet does not exist");
+            }
+            return populationDataset;
+        } catch (SQLException e) {
             throw new ServerException("Error while deleting a population");
         }
-        int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
-        return getPopulation(returnedId);
+
     }
 
     private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {
