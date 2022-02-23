@@ -121,7 +121,7 @@ class DataControllerSourceTest {
     @Test
     void testCreateSourceWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
-        checkMessages.add(new CheckMessage("age", "89", "this value is not an integer", true));
+        checkMessages.add(new CheckMessage("age", "89a", "this value is not an integer", true));
         Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -131,12 +131,12 @@ class DataControllerSourceTest {
                                 "  \"variables\": {" +
                                 "    \"sourcerecordid\": \"199920920101\"," +
                                 "    \"source\": \"74\"," +
-                                "    \"age\": \"89\"" +
+                                "    \"age\": \"89a\"" +
                                 "  }" +
                                 "}")
                 ).andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.status().reason(
-                        "Validation failed: [{level='error', variable='age', value='89', message='this value is not an integer'}]"))
+                        "Validation failed: [{level='error', variable='age', value='89a', message='this value is not an integer'}]"))
         ;
         Mockito.verify(dataService, Mockito.times(0)).getSource(Mockito.any());
     }

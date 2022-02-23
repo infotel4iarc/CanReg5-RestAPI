@@ -104,7 +104,7 @@ class DataControllerPatientTest {
         patient.setVariable("famn", "Smith");
         
         PatientDTO resultPatient = PatientDTO.from(patient, null);
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenReturn(resultPatient);
+        Mockito.when(dataService.savePatient(Mockito.any(PatientDTO.class), Mockito.any())).thenReturn(resultPatient);
         
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/patients")
@@ -134,7 +134,7 @@ class DataControllerPatientTest {
     void testCreatePatientWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
         checkMessages.add(new CheckMessage("birthd", "1905-01-20", "this date is not a valid date yyyyMMdd", true));
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
+        Mockito.when(dataService.savePatient(Mockito.any(PatientDTO.class), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/patients")
@@ -160,7 +160,8 @@ class DataControllerPatientTest {
 
     @Test
     void testCreatePatientExists() throws Exception {
-        Mockito.when(dataService.savePatient(Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Patient exists"));
+        Mockito.when(dataService.savePatient(Mockito.any(PatientDTO.class), Mockito.any()))
+                .thenThrow(new DuplicateRecordException("The Patient exists"));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/patients")

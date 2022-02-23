@@ -123,7 +123,7 @@ class DataControllerTumourTest {
     @Test
     void testCreateTumourWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
-        checkMessages.add(new CheckMessage("age", "89", "this value is not an integer", true));
+        checkMessages.add(new CheckMessage("age", "89a", "this value is not an integer", true));
         Mockito.when(dataService.saveTumour(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -133,12 +133,12 @@ class DataControllerTumourTest {
                                 "  \"variables\": {" +
                                 "    \"tumourid\": \"199920920101\"," +
                                 "    \"extent\": \"LC\"," +
-                                "    \"age\": \"89\"" +
+                                "    \"age\": \"89a\"" +
                                 "  }" +
                                 "}")
                 ).andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.status().reason(
-                        "Validation failed: [{level='error', variable='age', value='89', message='this value is not an integer'}]"))
+                        "Validation failed: [{level='error', variable='age', value='89a', message='this value is not an integer'}]"))
         ;
         Mockito.verify(dataService, Mockito.times(0)).getTumour(Mockito.any());
     }

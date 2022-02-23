@@ -88,7 +88,7 @@ class DataServiceTumourTest extends DataServiceParentForJunit {
         tumour.setVariable("extent", "RE");
         tumour.setVariable("patientrecordidtumourtable", "122222222");
         // Age is not a number object
-        tumour.setVariable("age", "89");
+        tumour.setVariable("age", "89a");
 
         Tumour tumourDB = new Tumour();
         tumourDB.setVariable("trid", 1);
@@ -97,7 +97,7 @@ class DataServiceTumourTest extends DataServiceParentForJunit {
         tumourDB.setVariable("tumourid", "202200010101");
 
         List<CheckMessage> checkMessages = new ArrayList<>();
-        checkMessages.add(new CheckMessage("age", "89", "this value is not an integer", true));
+        checkMessages.add(new CheckMessage("age", "89a", "this value is not an integer", true));
 
         Mockito.when(holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName())).thenReturn(canRegDAO);
         Mockito.when(checkRecordService.checkTumour(Mockito.any(Tumour.class))).thenReturn(checkMessages);
@@ -108,7 +108,7 @@ class DataServiceTumourTest extends DataServiceParentForJunit {
 
         Mockito.verify(canRegDAO, Mockito.times(0)).saveTumour(Mockito.any());
         Mockito.verify(canRegDAO, Mockito.times(0)).getRecord(Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean());
-        Assertions.assertEquals("[{level='error', variable='age', value='89', message='this value is not an integer'}]",
+        Assertions.assertEquals("[{level='error', variable='age', value='89a', message='this value is not an integer'}]",
                 exception.getMessage());
     }
 

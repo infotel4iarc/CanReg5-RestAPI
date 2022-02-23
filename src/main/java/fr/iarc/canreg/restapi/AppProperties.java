@@ -28,4 +28,11 @@ public class AppProperties {
 
     /** Role allowed to connect to Canreg for the rest api */
     private String role;
-}
+    
+    /** Upload dir for bulk import. */
+    private String bulkUploadDir;
+    
+    /** Delete the content of the directory on startup. */
+    private boolean bulkUploadDirDeleteOnStartup;
+
+     }

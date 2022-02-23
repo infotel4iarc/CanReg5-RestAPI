@@ -114,7 +114,6 @@ public class DataService {
         return dbRecord;
     }
 
-
     /**
      * Save a patient.<br>
      * @param patientDto       the patient input object with or without ids (regno and patientrecordid)
@@ -130,8 +129,22 @@ public class DataService {
         // Fill the variables of the patient
         patientDto.getVariables().entrySet().forEach(entry -> patient.setVariable(entry.getKey(), entry.getValue()));
 
+        return savePatient(patient, apiUserPrincipal.getName());
+    }
+
+    /**
+     * Save a patient.<br>
+     * @param patient   the patient input object with or without ids (regno and patientrecordid)
+     * @param userName  the user
+     * @return the patientDTO object with the generated ids if they were not present in input<br>
+     * null if the patient already exists with the provided id (usually the 'regno' variable)
+     * @if the record is locked, should not happen
+     * @throws VariableErrorException if the validation fails with at least 1 error
+     * @throws ServerException if an SQL exception happened
+     */
+    public PatientDTO savePatient(Patient patient, String userName) {
         try {
-            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(userName);
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
             // Check the input data for the patient
