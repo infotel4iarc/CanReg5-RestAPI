@@ -113,6 +113,13 @@
     ```
     - 500: server error
 
+- TODO: Improvement to be implemented:
+  - Asynchronous process to avoid a too long http request (risk of timeout): 
+    - create a worker 
+    - return the id of the worker 
+    - add entry point to get the status of the worker
+    - add entry point to get the final report when the worker has finished 
+  
 
 ### Security
 - CanReg5: TODO 

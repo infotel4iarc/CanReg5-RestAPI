@@ -139,7 +139,6 @@ public class DataService {
      * @param doWrite   true to write, false to test only
      * @return the patientDTO object with the generated ids if they were not present in input<br>
      * null if the patient already exists with the provided id (usually the 'regno' variable)
-     * @if the record is locked, should not happen
      * @throws VariableErrorException if the validation fails with at least 1 error
      * @throws ServerException if an SQL exception happened
      */
