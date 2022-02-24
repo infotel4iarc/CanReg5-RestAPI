@@ -1,6 +1,5 @@
 ## Implementation
 ### Metadata GET entry points
-DONE  
 - GET /api/meta/system/{registryCode}
 - GET /api/meta/dictionary/{dictionaryId}
 - GET /api/meta/dictionary/all
@@ -78,6 +77,42 @@ DONE
 ### Business GET entry points
 - Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
 - TODO
+
+### Bulk import
+- POST /bulk/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
+  - input data
+    - csvFile: multipart/form-data
+    - dataType: PATIENT or TUMOUR or SOURCE
+    - encodingName: a valid charset name, like UTF-8
+    - separatorName: TAB or COMMA
+    - behaviour: 
+      - CREATE_ONLY: create records only (no update of existing record)
+      - to be implemented: REJECT, UPDATE, OVERWRITE
+    - writeOrTest: 
+      - WRITE: write the data 
+      - TEST: test only
+  - result:
+    - 200: the file was processed, with or without warning and errors
+    ```
+    Starting to import patients from sources_small.tsv
+    1: OK
+    2: KO: Tumour does not exist: INSERT on table 'SOURCE' caused a violation of foreign key constraint 'SQL220209160256010' for key (200662160101).  The statement has been rolled back.
+    3: KO: [{level='error', variable='date', value='1945-01-13', message='this date is not a valid date yyyyMMdd'}, {level='error', variable='source', value='062', message='this code is not in the dictionary'}]
+    
+    Finished: 3 items in input: 1 written, 2 skipped.    
+    ```
+    - 400: error in an input parameter
+    ```
+    {
+    "timestamp": 1645721039266,
+    "status": 400,
+    "error": "Bad Request",
+    "message": "behaviour must be a valid value, like: CREATE_ONLY",
+    "path": "/bulk/import/SOURCE/UTF-8/TAB/CREATE_ONLY2/WRITE"
+    }    
+    ```
+    - 500: server error
+
 
 ### Security
 - CanReg5: TODO 

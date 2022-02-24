@@ -1,6 +1,9 @@
 package fr.iarc.canreg.restapi.controller;
 
 
+import static fr.iarc.canreg.restapi.model.BulkImportContext.DATA_PATIENT;
+import static fr.iarc.canreg.restapi.model.BulkImportContext.DATA_SOURCE;
+import static fr.iarc.canreg.restapi.model.BulkImportContext.DATA_TUMOUR;
 import static fr.iarc.canreg.restapi.model.BulkImportContext.DELIMITER_COMMA;
 import static fr.iarc.canreg.restapi.model.BulkImportContext.DELIMITER_TAB;
 import static fr.iarc.canreg.restapi.model.BulkImportContext.MODE_TEST;
@@ -49,9 +52,10 @@ public class BulkImportController {
     private BulkImportService bulkImportService;
 
     /**
-     * Import a csv file.
+     * Import a csv file with patient data.
      *
      * @param csvFile csv file
+     * @param dataType data type: PATIENT or TUMOUR or SOURCE                
      * @param encodingName a valid charset name
      * @param separatorName TAB or COMMA                 
      * @param behaviour see {@link fr.iarc.canreg.restapi.model.BulkImportBehaviour}
@@ -59,10 +63,11 @@ public class BulkImportController {
      * @param apiUser user
      * @return PatientDTO or an error
      */
-    @PostMapping(path = "/import/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}", 
+    @PostMapping(path = "/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}", 
             produces = MediaType.APPLICATION_JSON_VALUE, 
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> importCsv(@RequestPart MultipartFile csvFile,
+                                    @PathVariable String dataType,
                                     @PathVariable String encodingName,
                                     @PathVariable String separatorName,
                                     @PathVariable String behaviour,
@@ -70,6 +75,7 @@ public class BulkImportController {
                                     @ApiIgnore Principal apiUser) {
 
         // Check input parameters
+        checkDatatType(dataType);
         BulkImportBehaviour importBehaviour = checkBehaviour(behaviour);
         boolean isWrite = checkWriteMode(writeOrTest);
         String separator = checkSeparator(separatorName);
@@ -79,6 +85,7 @@ public class BulkImportController {
         BulkImportContext bulkImportContext = fileStorageService.storeFile(csvFile, apiUser.getName());
         
         // Set the properties
+        bulkImportContext.setDataType(dataType);
         bulkImportContext.setEncoding(encoding);
         bulkImportContext.setDelimiter(separator);
         bulkImportContext.setImportBehaviour(importBehaviour);
@@ -92,6 +99,7 @@ public class BulkImportController {
             bulkImportService.importFile(bulkImportContext);
             report = Files.readAllLines(bulkImportContext.getReportFilePath(), StandardCharsets.UTF_8)
                     .stream().collect(Collectors.joining("\n"));
+            
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (ServerException e) {
@@ -104,14 +112,12 @@ public class BulkImportController {
     }
 
     private Charset checkEncoding(String encodingName) {
-        Charset encoding = null;
         try {
-            encoding = Charset.forName(encodingName);
+            return Charset.forName(encodingName);
         } catch (IllegalArgumentException e ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "encodingName is not a valid encoding: "
                     + encodingName);
         }
-        return encoding;
     }
 
     private String checkSeparator(String separatorName) {
@@ -128,13 +134,24 @@ public class BulkImportController {
         return separator;
     }
 
+    private String checkDatatType(String dataType) {
+        if(!DATA_PATIENT.equals(dataType)
+            && !DATA_TUMOUR.equals(dataType)
+            && !DATA_SOURCE.equals(dataType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dataType must be: "
+                    + DATA_PATIENT + " or " + DATA_TUMOUR + " or " + DATA_SOURCE);
+        }
+        return dataType;
+    }
+    
     private BulkImportBehaviour checkBehaviour(String behaviour) {
         BulkImportBehaviour importBehaviour;
         try {
             importBehaviour = BulkImportBehaviour.valueOf(behaviour);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "behaviour is not a valid value: " 
-                    + Arrays.toString(BulkImportBehaviour.values()));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "behaviour must be a valid value, like: " 
+                    + Arrays.stream(BulkImportBehaviour.values())
+                    .map(BulkImportBehaviour::name).collect(Collectors.joining(" or ")));
         }
         return importBehaviour;
     }

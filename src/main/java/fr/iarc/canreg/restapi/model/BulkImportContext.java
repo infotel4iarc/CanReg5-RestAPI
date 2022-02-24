@@ -16,6 +16,9 @@ import lombok.ToString;
 @ToString
 public class BulkImportContext {
 
+    public static final String DATA_PATIENT = "PATIENT";
+    public static final String DATA_TUMOUR = "TUMOUR";
+    public static final String DATA_SOURCE = "SOURCE";
     public static final String MODE_WRITE = "WRITE";
     public static final String MODE_TEST = "TEST";
     public static final String DELIMITER_COMMA = "COMMA";
@@ -30,6 +33,9 @@ public class BulkImportContext {
     /** Original file name. */
     private String originalFileName;
 
+    /** Data type. */
+    private String dataType;
+    
     /** CSV delimiter: comma or tab. */
     private String delimiter;
     
@@ -89,5 +95,15 @@ public class BulkImportContext {
     public synchronized int incrementCounterKO() {
         processedLinesKO++;
         return processedLinesKO;
+    }
+
+    public boolean isDataPatient() {
+        return DATA_PATIENT.equals(dataType);
+    }
+    public boolean isDataTumour() {
+        return DATA_TUMOUR.equals(dataType);
+    }
+    public boolean isDataSource() {
+        return DATA_SOURCE.equals(dataType);
     }
 }

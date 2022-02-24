@@ -1,11 +1,18 @@
 package fr.iarc.canreg.restapi.service;
 
 import canreg.common.Tools;
+import canreg.common.checks.CheckRecordService;
+import canreg.common.database.DatabaseRecord;
 import canreg.common.database.Patient;
+import canreg.common.database.Source;
+import canreg.common.database.Tumour;
+import canreg.server.database.RecordLockedException;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
+import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.exception.VariableErrorException;
 import fr.iarc.canreg.restapi.model.BulkImportContext;
+import fr.iarc.canreg.restapi.model.DataDTO;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +43,10 @@ public class BulkImportService {
     @Autowired
     private DataService dataService;
 
+    /**
+     * Import a csv file.
+     * @param importContext BulkImportContext
+     */
     public void importFile(BulkImportContext importContext) {
 
         importContext.setReportFilePath(importContext.getInputFilePath()
@@ -59,16 +70,25 @@ public class BulkImportService {
                     continue;
                 }
                 StringBuilder trace = new StringBuilder(30);
-                // Create the patient
-                Patient patient = new Patient();
-                int index = 0;
-                for (String variableName : importContext.getVariableNames()) {
-                    patient.setVariable(variableName, csvRecord.get(index));
-                    index++;
+                DatabaseRecord inputRecord = null;
+                if(importContext.isDataPatient()) {
+                    inputRecord = new Patient();
+                } else if(importContext.isDataTumour()) {
+                    inputRecord = new Tumour();
+                } else if(importContext.isDataSource()) {
+                    inputRecord = new Source();
                 }
+                if(inputRecord != null) {
+                    int index = 0;
+                    for (String variableName : importContext.getVariableNames()) {
+                        inputRecord.setVariable(variableName, csvRecord.get(index));
+                        index++;
+                    }
 
-                savePatient(importContext, lineNumber, trace, patient);
-                writer.write(trace.toString());
+                    saveRecord(importContext, lineNumber, trace, inputRecord);
+
+                    writer.write(trace.toString());
+                }
 
                 lineNumber++;
             }
@@ -82,15 +102,40 @@ public class BulkImportService {
         }
     }
 
-    private void savePatient(BulkImportContext importContext, int lineNumber, StringBuilder trace, Patient patient) {
+    private void saveRecord(BulkImportContext importContext, int lineNumber, StringBuilder trace, 
+                            DatabaseRecord inputRecord) {
+        DataDTO<? extends DatabaseRecord> resultDto = null;
         try {
             trace.append('\n').append(lineNumber).append(": ");
-            dataService.savePatient(patient, importContext.getUserName());
-            trace.append("OK");
-            importContext.incrementCounterOK();
-        } catch (VariableErrorException | DuplicateRecordException | ServerException e) {
-            trace.append("ko: ").append(e.getMessage());
-        }
+            if(inputRecord instanceof Patient) {
+                resultDto = dataService.savePatient((Patient) inputRecord, importContext.getUserName(), 
+                        importContext.isWrite());
+            } else if(inputRecord instanceof Tumour) {
+                resultDto = dataService.saveTumour((Tumour) inputRecord, importContext.getUserName(), 
+                        importContext.isWrite());
+            } else if(inputRecord instanceof Source) {
+                resultDto = dataService.saveSource((Source) inputRecord, importContext.getUserName(), 
+                        importContext.isWrite());
+            }
+            if(resultDto != null) {
+                if (importContext.isWrite()) {
+                    trace.append("OK");
+                } else {
+                    trace.append("TEST OK");
+                }
+                List<String> formatErrors = 
+                        (List<String>) resultDto.getVariables().get(CheckRecordService.VARIABLE_FORMAT_ERRORS);
+                if(formatErrors != null) {
+                    trace.append(": ").append(formatErrors.toString());
+                }
+                
+                importContext.incrementCounterOK();
+            }
+        } catch (VariableErrorException | DuplicateRecordException | ServerException | RecordLockedException |
+                NotFoundException e) {
+            trace.append("KO: ").append(e.getMessage());
+            importContext.incrementCounterKO();
+        } 
     }
 
     /**

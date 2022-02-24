@@ -100,7 +100,7 @@ class DataControllerSourceTest {
         tumour.setVariable("sourcerecordid", "199920920101");
         
         SourceDTO result = SourceDTO.from(tumour, null);
-        Mockito.when(dataService.saveSource(Mockito.argThat(argument -> "199920920101".equals(argument.getVariables().get("sourcerecordid"))), Mockito.any())).thenReturn(result);
+        Mockito.when(dataService.saveSource((SourceDTO) Mockito.argThat(argument -> "199920920101".equals(((SourceDTO) argument).getVariables().get("sourcerecordid"))), Mockito.any())).thenReturn(result);
         
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/sources")
@@ -122,7 +122,7 @@ class DataControllerSourceTest {
     void testCreateSourceWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
         checkMessages.add(new CheckMessage("age", "89a", "this value is not an integer", true));
-        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
+        Mockito.when(dataService.saveSource((SourceDTO) Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/sources")
@@ -143,7 +143,7 @@ class DataControllerSourceTest {
 
     @Test
     void testCreateSourceExists() throws Exception {
-        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Source exists"));
+        Mockito.when(dataService.saveSource((SourceDTO) Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Source exists"));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/sources")
@@ -163,7 +163,7 @@ class DataControllerSourceTest {
 
     @Test
     void testCreateSourceTumourNotFound() throws Exception {
-        Mockito.when(dataService.saveSource(Mockito.any(), Mockito.any())).thenThrow(new NotFoundException("The Tumour does not exist"));
+        Mockito.when(dataService.saveSource((SourceDTO) Mockito.any(), Mockito.any())).thenThrow(new NotFoundException("The Tumour does not exist"));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/sources")

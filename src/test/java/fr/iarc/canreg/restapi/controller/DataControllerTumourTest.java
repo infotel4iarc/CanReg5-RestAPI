@@ -3,14 +3,12 @@ package fr.iarc.canreg.restapi.controller;
 import canreg.common.Globals;
 import canreg.common.checks.CheckMessage;
 import canreg.common.checks.CheckRecordService;
-import canreg.common.database.Patient;
 import canreg.common.database.Tumour;
 import canreg.common.database.User;
 import canreg.server.database.CanRegDAO;
 import fr.iarc.canreg.restapi.exception.DuplicateRecordException;
 import fr.iarc.canreg.restapi.exception.NotFoundException;
 import fr.iarc.canreg.restapi.exception.VariableErrorException;
-import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
 import fr.iarc.canreg.restapi.security.config.WebSecurityConfig;
 import fr.iarc.canreg.restapi.security.service.CanregDbDetailService;
@@ -102,7 +100,7 @@ class DataControllerTumourTest {
         tumour.setVariable("tumourid", "199920920101");
         
         TumourDTO result = TumourDTO.from(tumour, null);
-        Mockito.when(dataService.saveTumour(Mockito.argThat(argument -> "199920920101".equals(argument.getVariables().get("tumourid"))), Mockito.any())).thenReturn(result);
+        Mockito.when(dataService.saveTumour((TumourDTO) Mockito.argThat(argument -> "199920920101".equals(((TumourDTO) argument).getVariables().get("tumourid"))), Mockito.any())).thenReturn(result);
         
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/tumours")
@@ -124,7 +122,7 @@ class DataControllerTumourTest {
     void testCreateTumourWithError() throws Exception {
         List<CheckMessage> checkMessages = new ArrayList<>();
         checkMessages.add(new CheckMessage("age", "89a", "this value is not an integer", true));
-        Mockito.when(dataService.saveTumour(Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
+        Mockito.when(dataService.saveTumour((TumourDTO) Mockito.any(), Mockito.any())).thenThrow(new VariableErrorException(checkMessages.toString()));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/tumours")
@@ -145,7 +143,7 @@ class DataControllerTumourTest {
 
     @Test
     void testCreateTumourExists() throws Exception {
-        Mockito.when(dataService.saveTumour(Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Tumour exists"));
+        Mockito.when(dataService.saveTumour((TumourDTO) Mockito.any(), Mockito.any())).thenThrow(new DuplicateRecordException("The Tumour exists"));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/tumours")
@@ -165,7 +163,7 @@ class DataControllerTumourTest {
 
     @Test
     void testCreateTumourPatientNotFound() throws Exception {
-        Mockito.when(dataService.saveTumour(Mockito.any(), Mockito.any())).thenThrow(new NotFoundException("The Patient does not exist"));
+        Mockito.when(dataService.saveTumour((TumourDTO) Mockito.any(), Mockito.any())).thenThrow(new NotFoundException("The Patient does not exist"));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/tumours")

@@ -129,20 +129,21 @@ public class DataService {
         // Fill the variables of the patient
         patientDto.getVariables().entrySet().forEach(entry -> patient.setVariable(entry.getKey(), entry.getValue()));
 
-        return savePatient(patient, apiUserPrincipal.getName());
+        return savePatient(patient, apiUserPrincipal.getName(), true);
     }
 
     /**
      * Save a patient.<br>
      * @param patient   the patient input object with or without ids (regno and patientrecordid)
      * @param userName  the user
+     * @param doWrite   true to write, false to test only
      * @return the patientDTO object with the generated ids if they were not present in input<br>
      * null if the patient already exists with the provided id (usually the 'regno' variable)
      * @if the record is locked, should not happen
      * @throws VariableErrorException if the validation fails with at least 1 error
      * @throws ServerException if an SQL exception happened
      */
-    public PatientDTO savePatient(Patient patient, String userName) {
+    public PatientDTO savePatient(Patient patient, String userName, boolean doWrite) {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(userName);
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
@@ -158,8 +159,12 @@ public class DataService {
             }
 
             // no message or warning only
-            int returnedId = dao.savePatient(patient);
-            return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
+            if(doWrite) {
+                int returnedId = dao.savePatient(patient);
+                return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
+            } else {
+                return PatientDTO.from(patient, checkMessages);
+            }
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             throw new DuplicateRecordException("Patient already exists with the same " +
@@ -182,16 +187,33 @@ public class DataService {
         Tumour tumour = new Tumour();
         // Fill the variables of the tumour
         tumourDTO.getVariables().entrySet().forEach(entry -> tumour.setVariable(entry.getKey(), entry.getValue()));
+            
+        return saveTumour(tumour, apiUserPrincipal.getName(), true);
+    }
+
+    /**
+     * Save a tumour.<br>
+     * @param tumour tumour data
+     * @param userName the connected username
+     * @param doWrite   true to write, false to test only                 
+     * @return the tumourDTO object with the generated ids if they were not present in input<br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public TumourDTO saveTumour(Tumour tumour, String userName, boolean doWrite) throws RecordLockedException {
 
         try {
-            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(userName);
             tumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
             // Check the tumour
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(tumour));
 
-            int returnedId = dao.saveTumour(tumour);
-            return TumourDTO.from((Tumour) getRecord(returnedId, dao, Globals.TUMOUR_TABLE_NAME), checkMessages);
+            if(doWrite) {
+                int returnedId = dao.saveTumour(tumour);
+                return TumourDTO.from((Tumour) getRecord(returnedId, dao, Globals.TUMOUR_TABLE_NAME), checkMessages);
+            } else {
+                return TumourDTO.from(tumour, checkMessages);
+            }
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             if (e.getSQLState().equals("23503")) {
                 LOGGER.error("Patient does not exist: {} ", e.getMessage(), e);
@@ -218,15 +240,32 @@ public class DataService {
         // Fill the variables of the patient
         sourceDTO.getVariables().entrySet().forEach(entry -> source.setVariable(entry.getKey(), entry.getValue()));
 
+        return  saveSource(source, apiUserPrincipal.getName(), true);
+    }
+    
+    /**
+     * Save a source.<br>
+     * @param source source data
+     * @param @param userName the connected username
+     * @param doWrite   true to write, false to test only
+     * @return the sourceDTO object with the generated ids if they were not present in input<br>
+     * @throws RecordLockedException if the record is locked, should not happen
+     */
+    public SourceDTO saveSource(Source source, String userName, boolean doWrite) throws RecordLockedException {
+
         try {
-            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(userName);
             source.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
             // Check the source
             List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkSource(source));
 
-            int returnedId = dao.saveSource(source);
-            return SourceDTO.from((Source) getRecord(returnedId, dao, Globals.SOURCE_TABLE_NAME), checkMessages);
+            if(doWrite) {
+                int returnedId = dao.saveSource(source);
+                return SourceDTO.from((Source) getRecord(returnedId, dao, Globals.SOURCE_TABLE_NAME), checkMessages);
+            } else {
+                return SourceDTO.from(source, checkMessages);
+            }
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             if (e.getSQLState().equals("23503")) {
