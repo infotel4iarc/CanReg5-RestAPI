@@ -148,7 +148,25 @@ public class DataController {
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
-
+    /***
+     * update a patient.
+     * @param patient patient
+     * @return PatientDTO
+     */
+    @PutMapping(path = "/patients", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PatientDTO> editPatient(@RequestBody PatientDTO patient, @ApiIgnore Principal apiUser) {
+        PatientDTO result = null;
+        try {
+            result = dataService.editPatient(patient, apiUser);
+        } catch (ServerException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while updating a patient ");
+        }catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The patient does not Exist");
+        } catch (RecordLockedException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
     /***
      * Create a tumour.
      * @param tumour tumour
@@ -175,6 +193,26 @@ public class DataController {
             
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /***
+     * update a tumour.
+     * @param tumour tumour
+     * @return TumourDTO
+     */
+    @PutMapping(path = "/tumours", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TumourDTO> editPatient(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
+        TumourDTO result = null;
+        try {
+            result = dataService.editTumour(tumour, apiUser);
+        } catch (ServerException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while updating a tumour ");
+        }catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The tumour does not Exist");
+        } catch (RecordLockedException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /***

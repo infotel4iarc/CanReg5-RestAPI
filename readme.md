@@ -57,7 +57,11 @@ DONE
   - edit exists population dataset in the main database
   - uses the same json structure as the export of a dataset in CanReg5
   - error if the dataset already not exists
-  
+
+- PUT /api/patients: edit exists patient in holding db with idRecord 
+  - edit exists patient in holding db
+  - error if the patientRecodID not exists
+
 
 ### Business GET entry points
 - Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
