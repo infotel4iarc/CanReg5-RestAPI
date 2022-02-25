@@ -245,6 +245,28 @@ public class DataController {
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
+    /***
+     * update a source.
+     * @param source source
+     * @return SourceDTO
+     */
+    @PutMapping(path = "/sources", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SourceDTO> editSource(@RequestBody SourceDTO source, @ApiIgnore Principal apiUser) {
+        SourceDTO result = null;
+        try {
+            result = dataService.editSource(source, apiUser);
+        } catch (ServerException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while updating a source ");
+        } catch (DuplicateRecordException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The tumour does not exist");
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The source does not Exist");
+        } catch (RecordLockedException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+        }
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
 
     /***
      * Create a population dataset.

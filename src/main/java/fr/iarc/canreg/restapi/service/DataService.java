@@ -317,6 +317,16 @@ public class DataService {
             throw new ServerException("Error while updating a Patient: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Update a tumour.<br>
+     *
+     * @param tumourDTO      the tumour input object with id ( tumourID)
+     * @param apiUserPrincipal the connected user
+     * @return the tumourDTO object <br>
+     * @throws VariableErrorException if the validation fails with at least 1 error
+     * @throws ServerException        if an SQL exception happened
+     */
     public TumourDTO editTumour(TumourDTO tumourDTO, Principal apiUserPrincipal)throws RecordLockedException { // Build the patient
         Tumour inputTumour = new Tumour();
         // Fill the variables of the tumour
@@ -325,10 +335,10 @@ public class DataService {
         try {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
 
-            // Check the input data for the patient
+            // Check the input data for the tumour
            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(inputTumour));
 
-            // Check if the patient already exists for the Record ID
+            // Check if the tumour already exists for the Record ID
             int nbForTumourId = dao.countTumourByTumourID(inputTumour);
             if(nbForTumourId > 1) {
                 throw new ServerException("Update impossible, multiple tumour records found");
@@ -352,7 +362,52 @@ public class DataService {
         } catch (SQLException e) {
             throw new ServerException("Error while updating a Tumour: " + e.getMessage(), e);
         }
+    }
 
+    /**
+     * Update a source.<br>
+     *
+     * @param sourceDTO       the source input object with id ( sourceRecordId)
+     * @param apiUserPrincipal the connected user
+     * @return the sourceDTO object <br>
+     * @throws VariableErrorException if the validation fails with at least 1 error
+     * @throws ServerException        if an SQL exception happened
+     */
+    public SourceDTO editSource(SourceDTO sourceDTO, Principal apiUserPrincipal) throws RecordLockedException {
+        Source inputSource = new Source();
+        // Fill the variables of the source
+        sourceDTO.getVariables().entrySet().forEach(entry -> inputSource.setVariable(entry.getKey(), entry.getValue()));
+
+        try {
+            CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
+
+            // Check the input data for the source
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkSource(inputSource));
+
+            // Check if the source already exists for the Record ID
+            int nbForSourceRecordId = dao.countSourceBySourceRecordID(inputSource);
+            if(nbForSourceRecordId > 1) {
+                throw new ServerException("Update impossible, multiple source records found");
+            }
+            if(nbForSourceRecordId == 0) {
+                throw new NotFoundException("Source not found");
+            }
+            Source sourceForSourceRecordId = dao.getSourceBySourceID((String) inputSource.getVariable(Globals.StandardVariableNames.SourceRecordID.toString()));
+
+            //set SRID for update
+            inputSource.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, sourceForSourceRecordId.getVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME));
+
+            boolean edited = dao.editSource(inputSource, false);
+
+            return SourceDTO.from(inputSource, checkMessages);
+
+        } catch (DerbySQLIntegrityConstraintViolationException e) {
+            LOGGER.error("Tumour does not exist: {} ", e.getMessage(), e);
+            throw new DuplicateRecordException("Tumour does not exist: " + e.getMessage(), e);
+
+        } catch (SQLException e) {
+            throw new ServerException("Error while updating a source: " + e.getMessage(), e);
+        }
     }
     private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {
         if (!checkMessages.isEmpty() && checkMessages.stream().anyMatch(CheckMessage::isError)) {
@@ -361,7 +416,5 @@ public class DataService {
         }
         return checkMessages;
     }
-
-
 
 }

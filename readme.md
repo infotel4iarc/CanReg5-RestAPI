@@ -62,11 +62,17 @@ DONE
   - 200: patient updated
   - 400: validation error
   - 404: the patient is not found
-- PUT /api/tumours: edit exists tumour in holding db with idRecord
+- PUT /api/tumours: edit exists tumour in holding db with id
   - 200: tumour updated
   - 400: validation error
   - 404: the tumour is not found
   - 409: the linked patient is not found
+
+- PUT /api/sources: edit exists source in holding db with idRecord
+  - 200: source updated
+  - 400: validation error
+  - 404: the source is not found
+  - 409: the linked tumour is not found
 
 
 ### Business GET entry points
