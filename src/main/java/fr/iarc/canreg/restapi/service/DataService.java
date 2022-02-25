@@ -326,7 +326,7 @@ public class DataService {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
 
             // Check the input data for the patient
-           // List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(inputTumour));
+           List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(inputTumour));
 
             // Check if the patient already exists for the Record ID
             int nbForTumourId = dao.countTumourByTumourID(inputTumour);
@@ -336,15 +336,18 @@ public class DataService {
             if(nbForTumourId == 0) {
                 throw new NotFoundException("Tumour not found");
             }
-            Tumour tumourForTumourId = dao.getTumourByTumourID(
-                    (String) inputTumour.getVariable(Globals.StandardVariableNames.TumourID.toString()));
+            Tumour tumourForTumourId = dao.getTumourByTumourID((String) inputTumour.getVariable(Globals.StandardVariableNames.TumourID.toString()));
 
             //set TRID for update
-            inputTumour.setVariable(Globals.TUMOUR_TABLE_NAME.toString(),tumourForTumourId.getVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME.toString()));
+            inputTumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, tumourForTumourId.getVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME));
 
             boolean edited = dao.editTumour(inputTumour, false);
 
-            return TumourDTO.from(inputTumour, null);
+            return TumourDTO.from(inputTumour, checkMessages);
+
+        } catch (DerbySQLIntegrityConstraintViolationException e) {
+            LOGGER.error("Patient does not exist: {} ", e.getMessage(), e);
+            throw new DuplicateRecordException("Patient does not exist: " + e.getMessage(), e);
 
         } catch (SQLException e) {
             throw new ServerException("Error while updating a Tumour: " + e.getMessage(), e);

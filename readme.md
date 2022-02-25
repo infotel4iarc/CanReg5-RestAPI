@@ -59,8 +59,14 @@ DONE
   - error if the dataset already not exists
 
 - PUT /api/patients: edit exists patient in holding db with idRecord 
-  - edit exists patient in holding db
-  - error if the patientRecodID not exists
+  - 200: patient updated
+  - 400: validation error
+  - 404: the patient is not found
+- PUT /api/tumours: edit exists tumour in holding db with idRecord
+  - 200: tumour updated
+  - 400: validation error
+  - 404: the tumour is not found
+  - 409: the linked patient is not found
 
 
 ### Business GET entry points

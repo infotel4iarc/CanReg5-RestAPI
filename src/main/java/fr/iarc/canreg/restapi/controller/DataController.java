@@ -201,14 +201,16 @@ public class DataController {
      * @return TumourDTO
      */
     @PutMapping(path = "/tumours", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TumourDTO> editPatient(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
+    public ResponseEntity<TumourDTO> editTumour(@RequestBody TumourDTO tumour, @ApiIgnore Principal apiUser) {
         TumourDTO result = null;
         try {
             result = dataService.editTumour(tumour, apiUser);
         } catch (ServerException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Error while updating a tumour ");
-        }catch (NotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The tumour does not Exist");
+        } catch (DuplicateRecordException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The patient does not exist");
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The tumour does not Exist");
         } catch (RecordLockedException e) {
             throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
         }
