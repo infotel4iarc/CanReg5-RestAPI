@@ -18,6 +18,7 @@ import fr.iarc.canreg.restapi.exception.VariableErrorException;
 import fr.iarc.canreg.restapi.model.PatientDTO;
 import fr.iarc.canreg.restapi.model.SourceDTO;
 import fr.iarc.canreg.restapi.model.TumourDTO;
+import fr.iarc.canreg.restapi.utils.Constants;
 import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +48,6 @@ public class DataService {
     /** Service to check the records before save. */
     @Autowired
     private CheckRecordService checkRecordService;
-    private  GlobalToolBox globalToolBox;
-
-    public DataService() {
-    }
 
     /**
      * Get all populations.
@@ -140,7 +137,7 @@ public class DataService {
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
             // Check the input data for the patient
-         //   List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
+           List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
 
             // Check if the patient already exists for the Registry Number
             int nbForPatientId = dao.countPatientByPatientID(patient);
@@ -151,7 +148,7 @@ public class DataService {
 
             // no message or warning only
             int returnedId = dao.savePatient(patient);
-            return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), null);
+            return PatientDTO.from((Patient) getRecord(returnedId, dao, Globals.PATIENT_TABLE_NAME), checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             throw new DuplicateRecordException("Patient already exists with the same " +
@@ -301,20 +298,22 @@ public class DataService {
                 throw new ServerException("Update impossible, multiple patient records found");
             }
             if(nbForPatientRecordId == 0) {
-                throw new NotFoundException("Patient not found");
+                throw new NotFoundException(Constants.PATIENT_NOT_FOUND);
             }
                 Patient patientForRecordID = dao.getPatientByPatientRecordID(
-                        (String) inputPatient.getVariable(Globals.StandardVariableNames.PatientRecordID.toString()));
+                        (String) inputPatient.getVariable(dao.getPatientRecordIDVariableName()));
 
                 //set PRID for update
-                inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME.toString(),patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME.toString()));
+             //   inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME,patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME));
 
-            boolean edited = dao.editPatient(inputPatient, false);
-
+           if(!dao.editPatient(inputPatient, false)){
+               throw new ServerException(Constants.NOT_UPDATING);
+           }
             return PatientDTO.from(inputPatient, checkMessages);
 
         } catch (SQLException e) {
-            throw new ServerException("Error while updating a Patient: " + e.getMessage(), e);
+          throw  new ServerException("Error while updating a Patient: " + e.getMessage(), e);
+
         }
     }
 
@@ -327,7 +326,8 @@ public class DataService {
      * @throws VariableErrorException if the validation fails with at least 1 error
      * @throws ServerException        if an SQL exception happened
      */
-    public TumourDTO editTumour(TumourDTO tumourDTO, Principal apiUserPrincipal)throws RecordLockedException { // Build the patient
+    public TumourDTO editTumour(TumourDTO tumourDTO, Principal apiUserPrincipal)throws RecordLockedException {
+        // Build the tumour
         Tumour inputTumour = new Tumour();
         // Fill the variables of the tumour
         tumourDTO.getVariables().entrySet().forEach(entry -> inputTumour.setVariable(entry.getKey(), entry.getValue()));
@@ -341,23 +341,24 @@ public class DataService {
             // Check if the tumour already exists for the Record ID
             int nbForTumourId = dao.countTumourByTumourID(inputTumour);
             if(nbForTumourId > 1) {
-                throw new ServerException("Update impossible, multiple tumour records found");
+                throw new ServerException(Constants.MULTIPLE_TUMOUR);
             }
             if(nbForTumourId == 0) {
-                throw new NotFoundException("Tumour not found");
+                throw new NotFoundException(Constants.TUMOUR_NOT_FOUND);
             }
-            Tumour tumourForTumourId = dao.getTumourByTumourID((String) inputTumour.getVariable(Globals.StandardVariableNames.TumourID.toString()));
+            Tumour tumourForTumourId = dao.getTumourByTumourID((String) inputTumour.getVariable(dao.getTumourIDVariableName()));
 
             //set TRID for update
             inputTumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, tumourForTumourId.getVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME));
 
-            boolean edited = dao.editTumour(inputTumour, false);
-
+           if(! dao.editTumour(inputTumour, false)){
+               throw new ServerException(Constants.NOT_UPDATING);
+           }
             return TumourDTO.from(inputTumour, checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             LOGGER.error("Patient does not exist: {} ", e.getMessage(), e);
-            throw new DuplicateRecordException("Patient does not exist: " + e.getMessage(), e);
+            throw new NotFoundException(Constants.PATIENT_NOT_FOUND+ e.getMessage(), e);
 
         } catch (SQLException e) {
             throw new ServerException("Error while updating a Tumour: " + e.getMessage(), e);
@@ -387,26 +388,28 @@ public class DataService {
             // Check if the source already exists for the Record ID
             int nbForSourceRecordId = dao.countSourceBySourceRecordID(inputSource);
             if(nbForSourceRecordId > 1) {
-                throw new ServerException("Update impossible, multiple source records found");
+                throw new ServerException(Constants.MULTIPLE_SOURCE);
             }
             if(nbForSourceRecordId == 0) {
-                throw new NotFoundException("Source not found");
+                throw new NotFoundException(Constants.SOURCE_NOT_FOUND);
             }
-            Source sourceForSourceRecordId = dao.getSourceBySourceID((String) inputSource.getVariable(Globals.StandardVariableNames.SourceRecordID.toString()));
+            Source sourceForSourceRecordId = dao.getSourceBySourceID((String) inputSource.
+                    getVariable(dao.getSourceRecordIDVariableName()));
 
             //set SRID for update
             inputSource.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, sourceForSourceRecordId.getVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME));
 
-            boolean edited = dao.editSource(inputSource, false);
-
+            if(!dao.editSource(inputSource, false)){
+                throw new ServerException(Constants.NOT_UPDATING);
+            }
             return SourceDTO.from(inputSource, checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             LOGGER.error("Tumour does not exist: {} ", e.getMessage(), e);
-            throw new DuplicateRecordException("Tumour does not exist: " + e.getMessage(), e);
+            throw new NotFoundException(Constants.TUMOUR_NOT_FOUND + e.getMessage(), e);
 
         } catch (SQLException e) {
-            throw new ServerException("Error while updating a source: " + e.getMessage(), e);
+            throw new ServerException(Constants.ERROR_UPDATE_SOURCE + e.getMessage(), e);
         }
     }
     private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {
