@@ -1,6 +1,5 @@
 package fr.iarc.canreg.restapi.service;
 
-import canreg.common.GlobalToolBox;
 import canreg.common.Globals;
 import canreg.common.checks.CheckMessage;
 import canreg.common.checks.CheckRecordService;
@@ -304,7 +303,7 @@ public class DataService {
                         (String) inputPatient.getVariable(dao.getPatientRecordIDVariableName()));
 
                 //set PRID for update
-             //   inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME,patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME));
+              inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME));
 
            if(!dao.editPatient(inputPatient, false)){
                throw new ServerException(Constants.NOT_UPDATING);
