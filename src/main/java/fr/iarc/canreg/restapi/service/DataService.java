@@ -121,9 +121,8 @@ public class DataService {
      * @param apiUserPrincipal the connected user
      * @return the patientDTO object with the generated ids if they were not present in input<br>
      * null if the patient already exists with the provided id (usually the 'regno' variable)
-     * @if the record is locked, should not happen
      * @throws VariableErrorException if the validation fails with at least 1 error
-     * @throws ServerException if an SQL exception happened
+     * @throws ServerException        if an SQL exception happened
      */
     public PatientDTO savePatient(PatientDTO patientDto, Principal apiUserPrincipal) {
         // Build the patient
@@ -136,11 +135,11 @@ public class DataService {
             patient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, null);
 
             // Check the input data for the patient
-           List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkPatient(patient));
 
             // Check if the patient already exists for the Registry Number
             int nbForPatientId = dao.countPatientByPatientID(patient);
-            if(nbForPatientId > 0) {
+            if (nbForPatientId > 0) {
                 throw new DuplicateRecordException("Patient already exists with the same "
                         + dao.getPatientIDVariableName());
             }
@@ -160,7 +159,7 @@ public class DataService {
 
     /**
      * Save a tumour.<br>
-     * @param tumourDTO tumour data
+     * @param tumourDTO        tumour data
      * @param apiUserPrincipal the connected user
      * @return the tumourDTO object with the generated ids if they were not present in input<br>
      * @throws RecordLockedException if the record is locked, should not happen
@@ -195,7 +194,7 @@ public class DataService {
 
     /**
      * Save a source.<br>
-     * @param sourceDTO source data
+     * @param sourceDTO        source data
      * @param apiUserPrincipal the connected user
      * @return the sourceDTO object with the generated ids if they were not present in input<br>
      * @throws RecordLockedException if the record is locked, should not happen
@@ -231,7 +230,6 @@ public class DataService {
 
     /**
      * Create a population.<br>
-     *
      * @param populationDataset populationDataset
      * @return the PopulationDataset object with the generated ids <br>
      * @throws DuplicateRecordException if the record already exists for the populationDatasetIDn
@@ -239,9 +237,9 @@ public class DataService {
     public PopulationDataset createPopulation(PopulationDataset populationDataset) {
         PopulationDataset populationDatasetExist = getPopulation(populationDataset.getPopulationDatasetID());
 
-        if (populationDatasetExist != null 
+        if (populationDatasetExist != null
                 && populationDataset.getPopulationDatasetName().equals(
-                        populationDatasetExist.getPopulationDatasetName())) {
+                populationDatasetExist.getPopulationDatasetName())) {
             throw new DuplicateRecordException("The population dataSet already exists");
         }
         int returnedId = canRegDAO.saveNewPopulationDataset(populationDataset);
@@ -250,11 +248,10 @@ public class DataService {
 
     /**
      * Edit an existing population dataset.<br>
-     *
      * @param populationDataset populationDataset with populationDatasetID set.
      * @return the PopulationDataset object <br>
      * @throws NotFoundException if the record is not found with the populationDatasetID
-     * @throws ServerException if the delete before insert fails
+     * @throws ServerException   if the delete before insert fails
      */
     public PopulationDataset editPopulation(PopulationDataset populationDataset) {
         try {
@@ -272,14 +269,13 @@ public class DataService {
 
     /**
      * Update a patient.<br>
-     *
      * @param patientDto       the patient input object with ids ( patientrecordid)
      * @param apiUserPrincipal the connected user
      * @return the patientDTO object <br>
      * @throws VariableErrorException if the validation fails with at least 1 error
      * @throws ServerException        if an SQL exception happened
      */
-    public PatientDTO editPatient(PatientDTO patientDto, Principal apiUserPrincipal)throws RecordLockedException {
+    public PatientDTO editPatient(PatientDTO patientDto, Principal apiUserPrincipal) throws RecordLockedException {
         // Build the patient
         Patient inputPatient = new Patient();
         // Fill the variables of the patient
@@ -293,39 +289,39 @@ public class DataService {
 
             // Check if the patient already exists for the Record ID
             int nbForPatientRecordId = dao.countPatientByPatientRecordID(inputPatient);
-            if(nbForPatientRecordId > 1) {
+            if (nbForPatientRecordId > 1) {
                 throw new ServerException("Update impossible, multiple patient records found");
             }
-            if(nbForPatientRecordId == 0) {
+            if (nbForPatientRecordId == 0) {
                 throw new NotFoundException(Constants.PATIENT_NOT_FOUND);
             }
-                Patient patientForRecordID = dao.getPatientByPatientRecordID(
-                        (String) inputPatient.getVariable(dao.getPatientRecordIDVariableName()));
+            Patient patientForRecordID = dao.getPatientByPatientRecordID(
+                    (String) inputPatient.getVariable(dao.getPatientRecordIDVariableName()));
 
-                //set PRID for update
-              inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME, patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME));
+            //set PRID for update
+            inputPatient.setVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME,
+                    patientForRecordID.getVariable(Globals.PATIENT_TABLE_RECORD_ID_VARIABLE_NAME));
 
-           if(!dao.editPatient(inputPatient, false)){
-               throw new ServerException(Constants.NOT_UPDATING);
-           }
+            if (!dao.editPatient(inputPatient, false)) {
+                throw new ServerException(Constants.NOT_UPDATING);
+            }
             return PatientDTO.from(inputPatient, checkMessages);
 
         } catch (SQLException e) {
-          throw  new ServerException("Error while updating a Patient: " + e.getMessage(), e);
+            throw new ServerException("Error while updating a Patient: " + e.getMessage(), e);
 
         }
     }
 
     /**
      * Update a tumour.<br>
-     *
-     * @param tumourDTO      the tumour input object with id ( tumourID)
+     * @param tumourDTO        the tumour input object with id ( tumourID)
      * @param apiUserPrincipal the connected user
      * @return the tumourDTO object <br>
      * @throws VariableErrorException if the validation fails with at least 1 error
      * @throws ServerException        if an SQL exception happened
      */
-    public TumourDTO editTumour(TumourDTO tumourDTO, Principal apiUserPrincipal)throws RecordLockedException {
+    public TumourDTO editTumour(TumourDTO tumourDTO, Principal apiUserPrincipal) throws RecordLockedException {
         // Build the tumour
         Tumour inputTumour = new Tumour();
         // Fill the variables of the tumour
@@ -335,29 +331,31 @@ public class DataService {
             CanRegDAO dao = holdingDbHandler.getDaoForApiUser(apiUserPrincipal.getName());
 
             // Check the input data for the tumour
-           List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(inputTumour));
+            List<CheckMessage> checkMessages = handleValidationResult(checkRecordService.checkTumour(inputTumour));
 
             // Check if the tumour already exists for the Record ID
             int nbForTumourId = dao.countTumourByTumourID(inputTumour);
-            if(nbForTumourId > 1) {
+            if (nbForTumourId > 1) {
                 throw new ServerException(Constants.MULTIPLE_TUMOUR);
             }
-            if(nbForTumourId == 0) {
+            if (nbForTumourId == 0) {
                 throw new NotFoundException(Constants.TUMOUR_NOT_FOUND);
             }
-            Tumour tumourForTumourId = dao.getTumourByTumourID((String) inputTumour.getVariable(dao.getTumourIDVariableName()));
+            Tumour tumourForTumourId = dao.getTumourByTumourID(
+                    (String) inputTumour.getVariable(dao.getTumourIDVariableName()));
 
             //set TRID for update
-            inputTumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, tumourForTumourId.getVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME));
+            inputTumour.setVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME, 
+                    tumourForTumourId.getVariable(Globals.TUMOUR_TABLE_RECORD_ID_VARIABLE_NAME));
 
-           if(! dao.editTumour(inputTumour, false)){
-               throw new ServerException(Constants.NOT_UPDATING);
-           }
+            if (!dao.editTumour(inputTumour, false)) {
+                throw new ServerException(Constants.NOT_UPDATING);
+            }
             return TumourDTO.from(inputTumour, checkMessages);
 
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             LOGGER.error("Patient does not exist: {} ", e.getMessage(), e);
-            throw new NotFoundException(Constants.PATIENT_NOT_FOUND+ e.getMessage(), e);
+            throw new NotFoundException(Constants.PATIENT_NOT_FOUND + e.getMessage(), e);
 
         } catch (SQLException e) {
             throw new ServerException("Error while updating a Tumour: " + e.getMessage(), e);
@@ -366,8 +364,7 @@ public class DataService {
 
     /**
      * Update a source.<br>
-     *
-     * @param sourceDTO       the source input object with id ( sourceRecordId)
+     * @param sourceDTO        the source input object with id ( sourceRecordId)
      * @param apiUserPrincipal the connected user
      * @return the sourceDTO object <br>
      * @throws VariableErrorException if the validation fails with at least 1 error
@@ -386,19 +383,20 @@ public class DataService {
 
             // Check if the source already exists for the Record ID
             int nbForSourceRecordId = dao.countSourceBySourceRecordID(inputSource);
-            if(nbForSourceRecordId > 1) {
+            if (nbForSourceRecordId > 1) {
                 throw new ServerException(Constants.MULTIPLE_SOURCE);
             }
-            if(nbForSourceRecordId == 0) {
+            if (nbForSourceRecordId == 0) {
                 throw new NotFoundException(Constants.SOURCE_NOT_FOUND);
             }
             Source sourceForSourceRecordId = dao.getSourceBySourceID((String) inputSource.
                     getVariable(dao.getSourceRecordIDVariableName()));
 
             //set SRID for update
-            inputSource.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, sourceForSourceRecordId.getVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME));
+            inputSource.setVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME, 
+                    sourceForSourceRecordId.getVariable(Globals.SOURCE_TABLE_RECORD_ID_VARIABLE_NAME));
 
-            if(!dao.editSource(inputSource, false)){
+            if (!dao.editSource(inputSource, false)) {
                 throw new ServerException(Constants.NOT_UPDATING);
             }
             return SourceDTO.from(inputSource, checkMessages);
@@ -411,6 +409,7 @@ public class DataService {
             throw new ServerException(Constants.ERROR_UPDATE_SOURCE + e.getMessage(), e);
         }
     }
+
     private List<CheckMessage> handleValidationResult(List<CheckMessage> checkMessages) {
         if (!checkMessages.isEmpty() && checkMessages.stream().anyMatch(CheckMessage::isError)) {
             // Validation error

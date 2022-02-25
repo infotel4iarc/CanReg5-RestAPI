@@ -43,6 +43,7 @@ public class DataController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataController.class);
     public static final String VALIDATION_FAILED = "Validation failed: ";
+    public static final String RECORD_IS_LOCKED = "The record is locked";
 
     @Autowired
     private DataService dataService;
@@ -94,7 +95,8 @@ public class DataController {
     }
 
     /**
-     * @param recordID
+     * Get source.
+     * @param recordID record id
      * @return record content, null if not found and locked if there's an exception
      */
     @GetMapping(path = "/sources/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -130,7 +132,6 @@ public class DataController {
 
     /**
      * Create a patient.
-     *
      * @param patient patient
      * @param apiUser user
      * @return PatientDTO or an error
@@ -149,6 +150,7 @@ public class DataController {
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
+
     /***
      * update a patient.
      * @param patient patient
@@ -164,13 +166,14 @@ public class DataController {
                 throw new ResponseStatusException(HttpStatus.MULTIPLE_CHOICES, e.getMessage());
             }
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }catch (NotFoundException e) {
+        } catch (NotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (RecordLockedException e) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+            throw new ResponseStatusException(HttpStatus.LOCKED, RECORD_IS_LOCKED);
         }
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
     /***
      * Create a tumour.
      * @param tumour tumour
@@ -190,11 +193,11 @@ public class DataController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "The tumour already exists");
 
         } catch (RecordLockedException e) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
-            
-        } catch(NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, RECORD_IS_LOCKED);
+
+        } catch (NotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "A record is not found");
-            
+
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -210,14 +213,14 @@ public class DataController {
         try {
             result = dataService.editTumour(tumour, apiUser);
         } catch (ServerException e) {
-            if(e.getMessage().equals(Constants.MULTIPLE_TUMOUR))
+            if (e.getMessage().equals(Constants.MULTIPLE_TUMOUR))
                 throw new ResponseStatusException(HttpStatus.MULTIPLE_CHOICES, e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Constants.ERROR_UPDATE_TUMOUR);
         } catch (NotFoundException e) {
-            if (e.getMessage().contains(Constants.PATIENT_NOT_FOUND)){
+            if (e.getMessage().contains(Constants.PATIENT_NOT_FOUND)) {
                 throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, Constants.PATIENT_NOT_FOUND);
             }
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, Constants.TUMOUR_NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, Constants.TUMOUR_NOT_FOUND);
         } catch (RecordLockedException e) {
             throw new ResponseStatusException(HttpStatus.LOCKED, e.getMessage());
         }
@@ -236,7 +239,7 @@ public class DataController {
         try {
             result = dataService.saveSource(source, apiUser);
             LOGGER.info("source : {} ", result);
-            
+
         } catch (VariableErrorException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, VALIDATION_FAILED + e.getMessage());
 
@@ -244,14 +247,15 @@ public class DataController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "The source already exists");
 
         } catch (RecordLockedException e) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+            throw new ResponseStatusException(HttpStatus.LOCKED, RECORD_IS_LOCKED);
 
-        } catch(NotFoundException e) {
+        } catch (NotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "A record is not found");
 
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
+
     /***
      * update a source.
      * @param source source
@@ -263,15 +267,15 @@ public class DataController {
         try {
             result = dataService.editSource(source, apiUser);
         } catch (ServerException e) {
-            if(e.getMessage().equals(Constants.MULTIPLE_SOURCE))
+            if (e.getMessage().equals(Constants.MULTIPLE_SOURCE))
                 throw new ResponseStatusException(HttpStatus.MULTIPLE_CHOICES, Constants.MULTIPLE_SOURCE);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, Constants.ERROR_UPDATE_SOURCE);
         } catch (NotFoundException e) {
-            if(e.getMessage().contains(Constants.TUMOUR_NOT_FOUND))
+            if (e.getMessage().contains(Constants.TUMOUR_NOT_FOUND))
                 throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, Constants.TUMOUR_NOT_FOUND);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, Constants.SOURCE_NOT_FOUND);
         } catch (RecordLockedException e) {
-            throw new ResponseStatusException(HttpStatus.LOCKED, "The record is locked");
+            throw new ResponseStatusException(HttpStatus.LOCKED, RECORD_IS_LOCKED);
         }
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
@@ -307,8 +311,8 @@ public class DataController {
             LOGGER.info("PopulationDataset : {} ", result);
         } catch (ServerException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting a population ");
-        }catch (NotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"The population dataSet does not Exist");
+        } catch (NotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The population dataSet does not Exist");
         }
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
