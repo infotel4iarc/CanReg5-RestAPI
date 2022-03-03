@@ -1,5 +1,6 @@
 package fr.iarc.canreg.restapi;
 
+import canreg.common.checks.CheckRecordService;
 import canreg.server.database.CanRegDAO;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +13,9 @@ class CanRegApiApplicationTests {
 
     @MockBean
     private CanRegDAO canRegDAO;
+
+    @MockBean
+    private CheckRecordService checkRecordService;
     
     @Test
     void contextLoads() {

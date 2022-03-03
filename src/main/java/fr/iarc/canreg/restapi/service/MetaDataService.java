@@ -1,5 +1,6 @@
 package fr.iarc.canreg.restapi.service;
 
+import canreg.common.checks.CheckRecordService;
 import canreg.common.database.Dictionary;
 import canreg.server.database.CanRegDAO;
 import fr.iarc.canreg.restapi.exception.ServerException;
@@ -26,6 +27,9 @@ public class MetaDataService {
     @Autowired
     private CanRegDAO canRegDAO;
 
+    @Autowired
+    private CheckRecordService checkRecordService;
+
     /**
      * Returns the content of the XML file for the registry code.<br>
      * The file "registryCode" + ".xml" is read from the configured folder "registryFilesFolder".<br>
@@ -45,14 +49,16 @@ public class MetaDataService {
         try {
             lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            LOGGER.error("Metadata file cannot be read: {}", file, e);
             throw new ServerException("Metadata file cannot be read: " + e.getMessage() + " : " + file.getName(), e);
         }
         return String.join("\n", lines);
     }
 
     public Map<Integer, Dictionary> getDictionaries() {
-        return canRegDAO.getDictionary();
+        Map<Integer, Dictionary> dictionaryMap = canRegDAO.getDictionary();
+        // Update the CheckRecordService
+        checkRecordService.setDictionaries(dictionaryMap);
+        return dictionaryMap;
     }
     
     public Dictionary getDictionary(Integer id) {

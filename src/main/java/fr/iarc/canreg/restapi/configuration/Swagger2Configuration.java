@@ -9,7 +9,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -26,7 +26,7 @@ import java.util.List;
 @EnableWebMvc
 @Configuration
 @EnableSwagger2
-public class Swagger2Configuration extends WebMvcConfigurerAdapter {
+public class Swagger2Configuration implements WebMvcConfigurer {
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(mappingJackson2HttpMessageConverter());
@@ -41,7 +41,7 @@ public class Swagger2Configuration extends WebMvcConfigurerAdapter {
     @Bean
     public Docket docket() {
         Docket docket = new Docket(DocumentationType.SWAGGER_2);
-        docket.protocols(new HashSet<String>(Arrays.asList("http")));
+        docket.protocols(new HashSet<>(Arrays.asList("http")));
         docket.apiInfo(apiInfo()).select()
                 .apis(RequestHandlerSelectors.basePackage("fr.iarc.canreg.restapi"))
                 .paths(PathSelectors.any()).build();

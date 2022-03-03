@@ -1,41 +1,51 @@
 package fr.iarc.canreg.restapi.service;
 
+import canreg.common.checks.CheckRecordService;
+import canreg.common.database.Patient;
 import canreg.common.database.PopulationDataset;
-import canreg.common.database.Tumour;
 import canreg.server.database.CanRegDAO;
+import fr.iarc.canreg.restapi.model.PatientDTO;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashMap;
-import java.util.Map;
+/**
+ * Test of DataService.
+ */
+@ExtendWith(MockitoExtension.class)
+class DataServiceTest {
 
-
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@ContextConfiguration(classes = DataService.class)
-@ActiveProfiles("junit")
-public class DataServiceTest {
-
-
-    @MockBean
-    private CanRegDAO canRegDAO;
-    @Autowired
+    @InjectMocks
     private DataService dataService;
+    @Mock
+    private Principal apiUserPrincipal;
+    @Mock
+    private HoldingDbHandler holdingDbHandler;
+    @Mock
+    private Patient mockedPatient;
+    @Mock
+    private PatientDTO patientDTO;
+    @Mock
+    private CanRegDAO canRegDAO;
+    @Mock
+    private CheckRecordService checkRecordService;
+
+    @Mock
+    DerbySQLIntegrityConstraintViolationException dbException;
 
     @Test
     void testGetPopulations() {
         Map<Integer, PopulationDataset> populationsMap = new HashMap<>();
         PopulationDataset populationDataset = new PopulationDataset();
         populationDataset.setPopulationDatasetID(1);
-        populationsMap.put(1,populationDataset);
+        populationsMap.put(1, populationDataset);
 
         Assertions.assertNotNull(populationDataset);
     }
@@ -43,3 +53,4 @@ public class DataServiceTest {
 
 
 }
+

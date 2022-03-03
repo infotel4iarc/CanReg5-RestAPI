@@ -1,30 +1,28 @@
 package fr.iarc.canreg.restapi.model;
 
 
-
+import canreg.common.checks.CheckMessage;
 import canreg.common.database.Source;
+import java.io.Serializable;
+import java.util.List;
 import lombok.Getter;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-public class SourceDTO implements Serializable {
-
-    @Getter
-    private final Map<String,Object> variables;
+/**
+ * Source DTO.
+ */
+@Getter
+public class SourceDTO extends DataDTO<Source> implements Serializable {
 
     /**
-     * Constructor
+     * Builds a SourceDTO.
      * @param source source read in the database
+     * @param checkMessages warning messages, can be null or empty
      */
-    public SourceDTO(Source source) {
-        this.variables = new HashMap<>();
-        for(String variableName : source.getVariableNames()) {
-            variables.put(variableName,source.getVariable(variableName));
-        }
+    public static SourceDTO from(Source source, List<CheckMessage> checkMessages) {
+        SourceDTO sourceDTO = new SourceDTO();
+        sourceDTO.fill(source, checkMessages);
+        return sourceDTO;
     }
+
 }
 
