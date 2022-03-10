@@ -155,3 +155,9 @@
   ```
   -Dspring.profiles.active=local
   ```
+
+## Swagger UI
+
+```
+http://localhost:8080/swagger-ui.html
+```
