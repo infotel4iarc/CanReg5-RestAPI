@@ -12,14 +12,18 @@ import static fr.iarc.canreg.restapi.model.BulkImportContext.MODE_WRITE;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.BulkImportBehaviour;
 import fr.iarc.canreg.restapi.model.BulkImportContext;
+import fr.iarc.canreg.restapi.model.BulkImportWorker;
+import fr.iarc.canreg.restapi.service.BulkImportWorkerService;
 import fr.iarc.canreg.restapi.service.BulkImportService;
 import fr.iarc.canreg.restapi.service.FileStorageService;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +54,10 @@ public class BulkImportController {
 
     @Autowired
     private BulkImportService bulkImportService;
+
+    @Autowired
+    private BulkImportWorkerService bulkImportWorkerService;
+
 
     /**
      * Import a csv file with patient data.
@@ -163,5 +171,68 @@ public class BulkImportController {
                     + MODE_WRITE + " or " + MODE_TEST);
         }
         return isWrite;
+    }
+
+
+    /**
+     * upload a csv file with patient data.
+     *
+     * @param csvFile csv file
+     * @param dataType data type: PATIENT or TUMOUR or SOURCE
+     * @param encodingName a valid charset name
+     * @param separatorName TAB or COMMA
+     * @param behaviour see {@link fr.iarc.canreg.restapi.model.BulkImportBehaviour}
+     * @param writeOrTest WRITE to write the data, TEST to test only
+     * @param apiUser user
+     * @return workerId
+     */
+    @PostMapping(path = "/importWithWorker/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> importCsvWithWorker(@RequestPart MultipartFile csvFile,
+                                            @PathVariable String dataType,
+                                            @PathVariable String encodingName,
+                                            @PathVariable String separatorName,
+                                            @PathVariable String behaviour,
+                                            @PathVariable String writeOrTest,
+                                            @ApiIgnore Principal apiUser) {
+
+        // Check input parameters
+        checkDatatType(dataType);
+        BulkImportBehaviour importBehaviour = checkBehaviour(behaviour);
+        boolean isWrite = checkWriteMode(writeOrTest);
+        String separator = checkSeparator(separatorName);
+        Charset encoding = checkEncoding(encodingName);
+
+        // Write the file on disk
+        BulkImportContext bulkImportContext = fileStorageService.storeFile(csvFile, apiUser.getName());
+
+        // Set the properties
+        bulkImportContext.setDataType(dataType);
+        bulkImportContext.setEncoding(encoding);
+        bulkImportContext.setDelimiter(separator);
+        bulkImportContext.setImportBehaviour(importBehaviour);
+        bulkImportContext.setWrite(isWrite);
+        bulkImportContext.setUserName(apiUser.getName());
+        bulkImportContext.setReportFilePath(bulkImportContext.getInputFilePath()
+                .resolveSibling("report-" + bulkImportContext.getOriginalFileName()));
+
+        try {
+            BufferedWriter writer = Files.newBufferedWriter(bulkImportContext.getReportFilePath(), StandardCharsets.UTF_8);
+            writer.write("File " + bulkImportContext.getOriginalFileName() + "stored, waiting for import.");
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while creating the report file", e);
+        }
+
+
+        // create the worker
+        BulkImportWorker bulkImportWorker = new BulkImportWorker();
+        bulkImportWorker.setStatus(BulkImportWorker.WAITING);
+        bulkImportWorker.setBulkImportContextProperties(bulkImportContext);
+        bulkImportWorker.setCreatedDate(new Date());
+        long workerId = bulkImportWorkerService.createOrUpdate(bulkImportWorker);
+
+        // return the workerId
+        return new ResponseEntity<>(String.valueOf(workerId), HttpStatus.OK);
     }
 }
