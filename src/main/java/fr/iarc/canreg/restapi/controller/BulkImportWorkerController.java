@@ -65,7 +65,7 @@ public class BulkImportWorkerController {
     }
 
     // scheduled task to import csv file
-    @Scheduled(cron = "* 0/5 * * * *")
+    @Scheduled(cron = "* */5 * * * *")
     public void scheduledFileImport() {
 
         // load worker for import
@@ -77,12 +77,9 @@ public class BulkImportWorkerController {
             bulkImportWorkerService.createOrUpdate(worker.get());
 
             // Import
-            String report = null;
             try {
                 LOGGER.info("Ready to import csv file: {}", bulkImportContext);
                 bulkImportService.importFile(bulkImportContext);
-                report = Files.readAllLines(bulkImportContext.getReportFilePath(), StandardCharsets.UTF_8)
-                        .stream().collect(Collectors.joining("\n"));
                 worker.get().setStatus(BulkImportWorker.FINISHED);
                 bulkImportWorkerService.createOrUpdate(worker.get());
             } catch (IllegalArgumentException e) {
@@ -90,12 +87,7 @@ public class BulkImportWorkerController {
             } catch (ServerException e) {
                 worker.get().setStatus(BulkImportWorker.ERROR);
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while importing the file", e);
-            } catch (IOException e) {
-                worker.get().setStatus(BulkImportWorker.ERROR);
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while reading the file", e);
             }
-
-
         }
     }
 

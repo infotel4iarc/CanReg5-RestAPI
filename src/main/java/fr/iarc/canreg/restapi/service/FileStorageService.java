@@ -3,15 +3,20 @@ package fr.iarc.canreg.restapi.service;
 import fr.iarc.canreg.restapi.AppProperties;
 import fr.iarc.canreg.restapi.exception.ServerException;
 import fr.iarc.canreg.restapi.model.BulkImportContext;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import org.apache.commons.io.FileUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Service to handle the file storage.
@@ -21,6 +26,8 @@ public class FileStorageService {
 
     private final Path fileStorageLocation;
 
+    private final Path reportStorageLocation;
+
     /**
      * Constructor.
      * @param config appProperties
@@ -28,11 +35,14 @@ public class FileStorageService {
     public FileStorageService(AppProperties config) {
         this.fileStorageLocation = Paths.get(config.getBulkUploadDir())
                 .toAbsolutePath().normalize();
+        this.reportStorageLocation = Paths.get(config.getBulkReportDir()).toAbsolutePath().normalize();
         try {
             if(config.isBulkUploadDirDeleteOnStartup()) {
                 FileUtils.deleteDirectory(this.fileStorageLocation.toFile());
+                FileUtils.deleteDirectory(this.reportStorageLocation.toFile());
             }
             Files.createDirectories(this.fileStorageLocation);
+            Files.createDirectories(this.reportStorageLocation);
         } catch (IOException e) {
             throw new ServerException("Creation of upload dir failed.", e);
         }
@@ -82,6 +92,26 @@ public class FileStorageService {
                     + originalFileName);
         }
         return originalFileName;
+    }
+
+
+    /**
+     * Create a report file for uploaded csv file.
+     * @param inputFilePath the path of the input file
+     * @return file path
+     */
+    public Path createReportFile(Path inputFilePath){
+        String reportFileName = ("report-" + new File(inputFilePath.toString()).getName());
+        reportFileName = reportFileName.substring(0, reportFileName.length() - 3) + "log";
+
+        Path reportFileLocation = this.reportStorageLocation.resolve(reportFileName);
+        try (BufferedWriter writer = Files.newBufferedWriter(reportFileLocation, StandardCharsets.UTF_8);
+        ){
+            writer.write("File stored, waiting for import.");
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while creating the report file", e);
+        }
+        return reportFileLocation;
     }
 
 }

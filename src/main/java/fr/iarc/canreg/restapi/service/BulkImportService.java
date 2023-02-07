@@ -48,9 +48,6 @@ public class BulkImportService {
      * @param importContext BulkImportContext
      */
     public void importFile(BulkImportContext importContext) {
-
-        importContext.setReportFilePath(importContext.getInputFilePath()
-                .resolveSibling("report-" + importContext.getOriginalFileName()));
         // Read first line and count the lines.
         prepareRead(importContext);
 

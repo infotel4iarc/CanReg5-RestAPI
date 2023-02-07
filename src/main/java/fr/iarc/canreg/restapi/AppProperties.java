@@ -32,6 +32,9 @@ public class AppProperties {
     /** Upload dir for bulk import. */
     private String bulkUploadDir;
 
+    /** Upload dir for bulk import reports. */
+    private String bulkReportDir;
+
     /** Delete the content of the directory on startup. */
     private boolean bulkUploadDirDeleteOnStartup;
 
