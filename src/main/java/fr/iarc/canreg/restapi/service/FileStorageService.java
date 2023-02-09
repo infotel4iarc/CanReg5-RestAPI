@@ -33,6 +33,12 @@ public class FileStorageService {
      * @param config appProperties
      */
     public FileStorageService(AppProperties config) {
+        if(config.getBulkUploadDir().isEmpty()){
+            config.setBulkUploadDir("target/upload");
+        }
+        if(config.getBulkReportDir().isEmpty()){
+            config.setBulkReportDir("target/report");
+        }
         this.fileStorageLocation = Paths.get(config.getBulkUploadDir())
                 .toAbsolutePath().normalize();
         this.reportStorageLocation = Paths.get(config.getBulkReportDir()).toAbsolutePath().normalize();
@@ -100,14 +106,16 @@ public class FileStorageService {
      * @param inputFilePath the path of the input file
      * @return file path
      */
-    public Path createReportFile(Path inputFilePath){
+    public Path createReportFile(Path inputFilePath, String userName){
         String reportFileName = ("report-" + new File(inputFilePath.toString()).getName());
         reportFileName = reportFileName.substring(0, reportFileName.length() - 3) + "log";
 
-        Path reportFileLocation = this.reportStorageLocation.resolve(reportFileName);
-        try (BufferedWriter writer = Files.newBufferedWriter(reportFileLocation, StandardCharsets.UTF_8);
-        ){
+        Path reportFileLocation = this.reportStorageLocation.resolve(userName).resolve(reportFileName);
+        try {
+            Files.createDirectories(reportFileLocation.getParent());
+            BufferedWriter writer = Files.newBufferedWriter(reportFileLocation, StandardCharsets.UTF_8);
             writer.write("File stored, waiting for import.");
+            writer.close();
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while creating the report file", e);
         }

@@ -1,12 +1,9 @@
 package fr.iarc.canreg.restapi.model;
 
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -28,9 +25,6 @@ public class BulkImportWorker {
     @Id
     @GeneratedValue
     private long id;
-
-    // USER ID
-    private long userId;
 
     // RESULT
     private String result;

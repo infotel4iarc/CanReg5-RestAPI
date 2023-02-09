@@ -98,7 +98,7 @@ public class BulkImportController {
         bulkImportContext.setImportBehaviour(importBehaviour);
         bulkImportContext.setWrite(isWrite);
         bulkImportContext.setUserName(apiUser.getName());
-        bulkImportContext.setReportFilePath(fileStorageService.createReportFile(bulkImportContext.getInputFilePath()));
+        bulkImportContext.setReportFilePath(fileStorageService.createReportFile(bulkImportContext.getInputFilePath(), apiUser.getName()));
 
         // Import
         String report = null;
@@ -214,7 +214,7 @@ public class BulkImportController {
         bulkImportContext.setImportBehaviour(importBehaviour);
         bulkImportContext.setWrite(isWrite);
         bulkImportContext.setUserName(apiUser.getName());
-        bulkImportContext.setReportFilePath(fileStorageService.createReportFile(bulkImportContext.getInputFilePath()));
+        bulkImportContext.setReportFilePath(fileStorageService.createReportFile(bulkImportContext.getInputFilePath(), apiUser.getName()));
 
 
         // Create the worker

@@ -65,7 +65,7 @@ public class BulkImportWorkerController {
     }
 
     // scheduled task to import csv file
-    @Scheduled(cron = "* */5 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void scheduledFileImport() {
 
         // load worker for import
