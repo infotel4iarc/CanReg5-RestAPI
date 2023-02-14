@@ -113,13 +113,62 @@
     ```
     - 500: server error
 
-- TODO: Improvement to be implemented:
-  - Asynchronous process to avoid a too long http request (risk of timeout): 
-    - create a worker 
-    - return the id of the worker 
-    - add entry point to get the status of the worker
-    - add entry point to get the final report when the worker has finished 
-  
+- POST /bulk/importWithWorker/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
+  - input data
+    - csvFile: multipart/form-data
+    - dataType: PATIENT or TUMOUR or SOURCE
+    - encodingName: a valid charset name, like UTF-8
+    - separatorName: TAB or COMMA
+    - behaviour:
+      - CREATE_ONLY: create records only (no update of existing record)
+      - to be implemented: REJECT, UPDATE, OVERWRITE
+    - writeOrTest:
+      - WRITE: write the data
+      - TEST: test only
+  - result:
+    - 200: the file was uploaded, with or without warning and errors. The created worker's id will be returned
+    ```
+    1
+    ```
+    - 400: error in an input parameter
+    ```
+    {
+    "timestamp": 1645721039266,
+    "status": 400,
+    "error": "Bad Request",
+    "message": "behaviour must be a valid value, like: CREATE_ONLY",
+    "path": "/bulk/import/SOURCE/UTF-8/TAB/CREATE_ONLY2/WRITE"
+    }    
+    ```
+    - 500: server error
+
+### Bulk import worker
+- GET /api/worker/report/{id}
+  - input data: 
+    - worker id 
+  - result: 
+    - 200: return the report of the corresponding worker 
+    ```
+    Starting to import patients from randomPatientRecord.csv
+    1: OK
+    2: OK
+    3: KO: Patient already exists with the same RegNo
+    
+    Finished: 3 items in input: 2 written, 1 skipped.
+    ```
+    - 400: error in an input parameter
+    - 500: server error
+
+- GET /api/worker/status/{id}
+  - input data:
+    - worker id
+  - result:
+    - 200: return worker's current statu
+    ```
+    WAITING
+    ```
+    - 400: error in an input parameter
+    - 500: server error
 
 ### Security
 - CanReg5: TODO 

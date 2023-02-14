@@ -37,7 +37,7 @@ public class FileStorageService {
             config.setBulkUploadDir("target/upload");
         }
         if(config.getBulkReportDir().isEmpty()){
-            config.setBulkReportDir("target/report");
+            config.setBulkReportDir("${user.home}/.CanRegAPI/report");
         }
         this.fileStorageLocation = Paths.get(config.getBulkUploadDir())
                 .toAbsolutePath().normalize();
