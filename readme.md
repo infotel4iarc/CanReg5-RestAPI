@@ -1,3 +1,28 @@
+# Run CanReg-API
+## Local run
+- Main class: CanRegApiApplication
+- VM options:  
+  the following option is needed to use application-local.properties:
+  ```
+  -Dspring.profiles.active=local
+  ```
+### Database
+The api uses CanReg's database to store records related information (patient, tumour, source). Therefor, the application should be started before the api.
+
+Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
+A pop-up window will be shown with the message "Database started".
+
+The embedded database use to stock import information is a H2 database, it can be accessed using the following link:
+```
+http://localhost:8080/h2-console
+```
+This access link can be changed with `spring.h2.console.path` in properties.
+## Swagger UI
+The Swagger can be accessed using the following link: 
+```
+http://localhost:8080/swagger-ui.html
+```
+
 ## Implementation
 ### Metadata GET entry points
 - GET /api/meta/system/{registryCode}
@@ -79,6 +104,7 @@
 - TODO
 
 ### Bulk import
+Imported file will be stored at `target/upload` by default, this can be changed with `bulkUploadDir` in `application.properties`
 - POST /bulk/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
   - input data
     - csvFile: multipart/form-data
@@ -169,6 +195,8 @@
     ```
     - 400: error in an input parameter
     - 500: server error
+#### Worker Report
+Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, this can be changed with `bulkReportDir` in `application.properties`
 
 ### Security
 - CanReg5: TODO 
@@ -195,18 +223,3 @@
   *tumour: trid
   *source: srid
 
-
-
-## Local run
-- Main class: CanRegApiApplication
-- VM options:  
-  the following option is needed to use application-local.properties:
-  ```
-  -Dspring.profiles.active=local
-  ```
-
-## Swagger UI
-
-```
-http://localhost:8080/swagger-ui.html
-```
