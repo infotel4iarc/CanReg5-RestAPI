@@ -3,11 +3,11 @@ CanReg API user guide
 # Summary
 - [Run CanReg-API](#Run-CanReg-API)
   - [Local Run](#local-run)
-    - [Before launching the API](#before-launching-the-api)
-    - [Database](#database)
-  - [Swagger UI](#swagger-ui)
-  - [Implementation](#implementation)
+- [Database](#database)
+- [Swagger UI](#swagger-ui)
+- [Implementation](#implementation)
 - [Security](#security)
+  - [User](#user)
 - [Import data in a holding database](#import-the-data-in-a-holding-database)
 ----------------------------------
 # Run CanReg API
@@ -15,17 +15,24 @@ CanReg API user guide
 ### Before launching the API
 CanReg API uses CanReg application as a package, please make sure to build the application with the branch rest-api before. 
 
-Please start CanReg application and its database server first before you launch the api (see instruction in the section [database](#database))
+### Run in IDE
+
+Once the project is downloaded and imported in your IDE, please start CanReg application and its database server first before you launch the api (see instruction in the section [database](#database))
 
 The Main class of this spring boot application is: CanRegApiApplication. In order to launch it locally using application-local.properties, you need the following VM option:
   ```
   -Dspring.profiles.active=local
   ```
-### Database
+## Database
 The api uses CanReg's database to store records related information (patient, tumour, source). Therefore, the application should be started before the api.
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
-A pop-up window will be shown with the message "Database started". About user management please check the section [User](#user) 
+
+<p align="center">
+ <img alt="start_database_server.png" height="200" src="start_database_server.png" />
+</p>
+
+A pop-up window will be shown with the message "Database started".
 
 The embedded database use to stock import information is a H2 database, it can be accessed using the following link:
 ```
@@ -179,7 +186,7 @@ Imported file will be stored at `target/upload` by default, this can be changed 
     "status": 400,
     "error": "Bad Request",
     "message": "behaviour must be a valid value, like: CREATE_ONLY",
-    "path": "/bulk/import/SOURCE/UTF-8/TAB/CREATE_ONLY2/WRITE"
+    "path": "/bulk/importWithWorker/SOURCE/UTF-8/TAB/CREATE_ONLY/WRITE"
     }    
     ```
     - 500: server error
@@ -226,6 +233,9 @@ Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, t
 ## User
 User can be managed using user manager in CanReg. The role using to access api functionalities is currently `ANALYST`. 
 This can be modified in properties.
+<p align="center">
+  <img alt="user_manager.png" src="user_manager.png" width="700"/>
+</p>
 
 # Import the data in a holding database
 - The data are imported in a holding database = not the current database.   
