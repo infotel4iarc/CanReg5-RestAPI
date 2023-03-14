@@ -7,7 +7,7 @@ CanReg API user guide
 - [Swagger UI](#swagger-ui)
 - [Implementation](#implementation)
 - [Security](#security)
-  - [User](#user)
+  - [User management](#user-management)
 - [Import data in a holding database](#import-the-data-in-a-holding-database)
 ----------------------------------
 # Run CanReg API
@@ -24,7 +24,7 @@ The Main class of this spring boot application is: CanRegApiApplication. In orde
   -Dspring.profiles.active=local
   ```
 ## Database
-The api uses CanReg's database to store records related information (patient, tumour, source). Therefore, the application should be started before the api.
+The api uses [CanReg](https://github.com/IARC-CSU/CanReg5)'s database to store records related information (patient, tumour, source). Therefore, the application should be started before the api.
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
 
@@ -128,6 +128,9 @@ This swagger gives easy access to endpoints available. You can use them by givin
 
 ## Bulk import
 Imported file will be stored at `target/upload` by default, this can be changed with `bulkUploadDir` in `application.properties`
+
+If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up.
+
 - POST /bulk/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
   - input data
     - csvFile: multipart/form-data
@@ -221,6 +224,8 @@ Imported file will be stored at `target/upload` by default, this can be changed 
 ### Worker Report
 Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, this can be changed with `bulkReportDir` in `application.properties`
 
+If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up. 
+
 # Security
 - CanReg5: TODO 
   - implement a new role in CanReg: REST-API
@@ -230,22 +235,22 @@ Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, t
   - Use Spring Security
   - Use Basic Authentication that is a standard = the api clients will know how to use it 
 
-## User
-User can be managed using user manager in CanReg. The role using to access api functionalities is currently `ANALYST`. 
-This can be modified in properties.
+## User management
+User can be managed using user manager in CanReg. The role used to access api functionalities is currently `ANALYST`. 
+This can be modified in CanReg-API's properties.
 <p align="center">
   <img alt="user_manager.png" src="user_manager.png" width="700"/>
 </p>
 
 # Import the data in a holding database
-- The data are imported in a holding database = not the current database.   
-  This is similar to what is done in the existing "import" feature in CanReg5.
-- At startup, if not already existing, CanReg5 server creates one holding database for each rest user. 
+The data are imported in a holding database different from the current database. This is similar to what is done in the existing "import" feature in CanReg5.
+
+At startup, if not already existing, CanReg5 server creates one holding database for each rest user. 
   - The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes) 
     See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
-- One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
-  - The dao are stored in a mps to avoid creating them at each call. 
-- TODO: Errors have to be returned to the caller: validation errors, warning messages...
+  - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
+    - The dao are stored in a mps to avoid creating them at each call. 
+  - TODO: Errors have to be returned to the caller: validation errors, warning messages...
 
 ## Ids
 - Delete technical IDs: remove technical ids in enter set methods because it generates automatic
