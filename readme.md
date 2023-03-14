@@ -1,15 +1,37 @@
-# Run CanReg-API
+CanReg API user guide
+=========================
+# Summary
+- [Run CanReg-API](#Run-CanReg-API)
+  - [Local Run](#local-run)
+- [Database](#database)
+- [Swagger UI](#swagger-ui)
+- [Implementation](#implementation)
+- [Security](#security)
+  - [User management](#user-management)
+- [Import data in a holding database](#import-the-data-in-a-holding-database)
+----------------------------------
+# Run CanReg API
 ## Local run
-- Main class: CanRegApiApplication
-- VM options:  
-  the following option is needed to use application-local.properties:
+### Before launching the API
+CanReg API uses CanReg application as a package, please make sure to build the application with the branch rest-api before. 
+
+### Run in IDE
+
+Once the project is downloaded and imported in your IDE, please start CanReg application and its database server first before you launch the api (see instruction in the section [database](#database))
+
+The Main class of this spring boot application is: CanRegApiApplication. In order to launch it locally using application-local.properties, you need the following VM option:
   ```
   -Dspring.profiles.active=local
   ```
-### Database
-The api uses CanReg's database to store records related information (patient, tumour, source). Therefor, the application should be started before the api.
+## Database
+The api uses [CanReg](https://github.com/IARC-CSU/CanReg5)'s database to store records related information (patient, tumour, source). Therefore, the application should be started before the api.
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
+
+<p align="center">
+ <img alt="start_database_server.png" height="200" src="start_database_server.png" />
+</p>
+
 A pop-up window will be shown with the message "Database started".
 
 The embedded database use to stock import information is a H2 database, it can be accessed using the following link:
@@ -17,19 +39,20 @@ The embedded database use to stock import information is a H2 database, it can b
 http://localhost:8080/h2-console
 ```
 This access link can be changed with `spring.h2.console.path` in properties.
-## Swagger UI
+# Swagger UI
 The Swagger can be accessed using the following link: 
 ```
 http://localhost:8080/swagger-ui.html
 ```
+This swagger gives easy access to endpoints available. You can use them by giving corresponding arguments, this could be checked in the section [implementation](#Implementation)
 
-## Implementation
-### Metadata GET entry points
+# Implementation
+## Metadata GET entry points
 - GET /api/meta/system/{registryCode}
 - GET /api/meta/dictionary/{dictionaryId}
 - GET /api/meta/dictionary/all
 
-### Business SET entry points
+## Business SET entry points
 - POST /api/patients: create a patient 
   - 201: patient created
     - the content of the created Patient is returned with created ids and with possible warnings in the variable "format_errors"
@@ -99,12 +122,15 @@ http://localhost:8080/swagger-ui.html
   - 409: the linked tumour is not found
 
 
-### Business GET entry points
+## Business GET entry points
 - Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
 - TODO
 
-### Bulk import
+## Bulk import
 Imported file will be stored at `target/upload` by default, this can be changed with `bulkUploadDir` in `application.properties`
+
+If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up.
+
 - POST /bulk/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
   - input data
     - csvFile: multipart/form-data
@@ -163,12 +189,12 @@ Imported file will be stored at `target/upload` by default, this can be changed 
     "status": 400,
     "error": "Bad Request",
     "message": "behaviour must be a valid value, like: CREATE_ONLY",
-    "path": "/bulk/import/SOURCE/UTF-8/TAB/CREATE_ONLY2/WRITE"
+    "path": "/bulk/importWithWorker/SOURCE/UTF-8/TAB/CREATE_ONLY/WRITE"
     }    
     ```
     - 500: server error
 
-### Bulk import worker
+## Bulk import worker
 - GET /api/worker/report/{id}
   - input data: 
     - worker id 
@@ -195,10 +221,12 @@ Imported file will be stored at `target/upload` by default, this can be changed 
     ```
     - 400: error in an input parameter
     - 500: server error
-#### Worker Report
+### Worker Report
 Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, this can be changed with `bulkReportDir` in `application.properties`
 
-### Security
+If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up. 
+
+# Security
 - CanReg5: TODO 
   - implement a new role in CanReg: REST-API
   - can only access to CanReg through the Rest Api
@@ -207,17 +235,24 @@ Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, t
   - Use Spring Security
   - Use Basic Authentication that is a standard = the api clients will know how to use it 
 
-### Import the data in a holding database
-- The data are imported in a holding database = not the current database.   
-  This is similar to what is done in the existing "import" feature in CanReg5.
-- At startup, if not already existing, CanReg5 server creates one holding database for each rest user. 
+## User management
+User can be managed using user manager in CanReg. The role used to access api functionalities is currently `ANALYST`. 
+This can be modified in CanReg-API's properties.
+<p align="center">
+  <img alt="user_manager.png" src="user_manager.png" width="700"/>
+</p>
+
+# Import the data in a holding database
+The data are imported in a holding database different from the current database. This is similar to what is done in the existing "import" feature in CanReg5.
+
+At startup, if not already existing, CanReg5 server creates one holding database for each rest user. 
   - The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes) 
     See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
-- One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
-  - The dao are stored in a mps to avoid creating them at each call. 
-- TODO: Errors have to be returned to the caller: validation errors, warning messages...
+  - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
+    - The dao are stored in a mps to avoid creating them at each call. 
+  - TODO: Errors have to be returned to the caller: validation errors, warning messages...
 
-### Ids
+## Ids
 - Delete technical IDs: remove technical ids in enter set methods because it generates automatic
   *patient: prid
   *tumour: trid
