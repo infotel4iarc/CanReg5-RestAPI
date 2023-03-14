@@ -1,16 +1,19 @@
+CanReg API user guide
+=========================
 # Run CanReg-API
 ## Local run
-- Main class: CanRegApiApplication
-- VM options:  
-  the following option is needed to use application-local.properties:
+### Before launching the API
+CanReg API uses CanReg application as a package, please make sure to build the application with the branch rest-api before. 
+Please start CanReg application and its database server first before you launch the api (see instruction in the section [database](###database))
+The Main class of this spring boot application is: CanRegApiApplication. In order to launch it locally using application-local.properties, you need the following VM option:
   ```
   -Dspring.profiles.active=local
   ```
 ### Database
-The api uses CanReg's database to store records related information (patient, tumour, source). Therefor, the application should be started before the api.
+The api uses CanReg's database to store records related information (patient, tumour, source). Therefore, the application should be started before the api.
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
-A pop-up window will be shown with the message "Database started".
+A pop-up window will be shown with the message "Database started". About user management please check the section [User](####user) 
 
 The embedded database use to stock import information is a H2 database, it can be accessed using the following link:
 ```
@@ -22,6 +25,7 @@ The Swagger can be accessed using the following link:
 ```
 http://localhost:8080/swagger-ui.html
 ```
+This swagger gives easy access to endpoints available. You can use them by giving corresponding arguments, this could be checked in the section [implementation](##Implementation)
 
 ## Implementation
 ### Metadata GET entry points
@@ -206,6 +210,10 @@ Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, t
 - Rest-api:
   - Use Spring Security
   - Use Basic Authentication that is a standard = the api clients will know how to use it 
+
+#### User
+User can be managed using user manager in CanReg. The role using to access api functionalities is currently `ANALYST`. 
+This can be modified in properties.
 
 ### Import the data in a holding database
 - The data are imported in a holding database = not the current database.   
