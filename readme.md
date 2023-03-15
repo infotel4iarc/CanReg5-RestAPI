@@ -53,7 +53,8 @@ This swagger gives easy access to endpoints available. You can use them by givin
 - GET /api/meta/dictionary/all
 
 ## Business SET entry points
-- POST /api/patients: create a patient 
+#### Create a patient
+- POST /api/patients
   - 201: patient created
     - the content of the created Patient is returned with created ids and with possible warnings in the variable "format_errors"
     ```
@@ -86,36 +87,41 @@ This swagger gives easy access to endpoints available. You can use them by givin
       "path": "/api/setPatients"
     }    
     ```
-- POST /api/tumour: create a tumour 
+#### Create a tumour
+- POST /api/tumour
   - 201: tumour created
   - 400: validation error
   - 404: the linked patient is not found
   - 409: tumour already exists
-- POST /api/source: create a source
+#### Create a source
+- POST /api/source
   - 201: source created
   - 400: validation error
   - 404: the linked tumour is not found
   - 409: source already exists
-- POST /api/population: create a new population dataset
+#### Create a new population dataset
+- POST /api/population
   - creates a new dataset in the main database
   - uses the same json structure as the export of a dataset in CanReg5
   - error if the dataset already exists
-- PUT /api/population: edit a exists population dataset
+#### Edit a exists population dataset
+- PUT /api/population
   - edit exists population dataset in the main database
   - uses the same json structure as the export of a dataset in CanReg5
   - error if the dataset already not exists
-
-- PUT /api/patients: edit exists patient in holding db with idRecord 
+#### Edit exists patient in holding db with idRecord
+- PUT /api/patients
   - 200: patient updated
   - 400: validation error
   - 404: the patient is not found
-- PUT /api/tumours: edit exists tumour in holding db with id
+#### Edit exists tumour in holding db with id
+- PUT /api/tumours
   - 200: tumour updated
   - 400: validation error
   - 404: the tumour is not found
   - 409: the linked patient is not found
-
-- PUT /api/sources: edit exists source in holding db with idRecord
+#### Edit exists source in holding db with idRecord
+- PUT /api/sources
   - 200: source updated
   - 400: validation error
   - 404: the source is not found
@@ -127,10 +133,13 @@ This swagger gives easy access to endpoints available. You can use them by givin
 - TODO
 
 ## Bulk import
-Imported file will be stored at `target/upload` by default, this can be changed with `bulkUploadDir` in `application.properties`
+This will import the selected file to the holding database of the current connected user. Imported file will be stored at `target/upload` by default, this can be changed with `bulkUploadDir` in properties.
+Report will be stored by default at `${user.home}/.CanRegAPI/report`, this can be changed with `bulkReportDir` in properties.
 
-If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up.
+If `bulkUploadDirDeleteOnStartup` is set to true in properties, directories content will be deleted on start up.
 
+More details in section [import the data in a holding database](#import-the-data-in-a-holding-database)
+#### Import file
 - POST /bulk/import/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
   - input data
     - csvFile: multipart/form-data
@@ -165,6 +174,8 @@ If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's co
     ```
     - 500: server error
 
+#### Import file with worker
+Import the file using a worker, worker related details [here](#worker).
 - POST /bulk/importWithWorker/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
   - input data
     - csvFile: multipart/form-data
@@ -195,6 +206,8 @@ If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's co
     - 500: server error
 
 ## Bulk import worker
+
+#### Get worker report 
 - GET /api/worker/report/{id}
   - input data: 
     - worker id 
@@ -210,7 +223,8 @@ If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's co
     ```
     - 400: error in an input parameter
     - 500: server error
-
+    
+#### Get worker status
 - GET /api/worker/status/{id}
   - input data:
     - worker id
@@ -221,10 +235,6 @@ If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's co
     ```
     - 400: error in an input parameter
     - 500: server error
-### Worker Report
-Worker's report will be stored by default at `${user.home}/.CanRegAPI/report`, this can be changed with `bulkReportDir` in `application.properties`
-
-If bulkUploadDirDeleteOnStartup is set to true in properties, the directory's content will be deleted on start up. 
 
 # Security
 - CanReg5: TODO 
@@ -251,6 +261,11 @@ At startup, if not already existing, CanReg5 server creates one holding database
   - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
     - The dao are stored in a mps to avoid creating them at each call. 
   - TODO: Errors have to be returned to the caller: validation errors, warning messages...
+
+### Worker 
+If the file is imported using a worker, it will be stored.
+A worker is set to run every minute 5 to check the if there are file non-imported. If it is the case, the worker will import the oldest file among them. 
+
 
 ## Ids
 - Delete technical IDs: remove technical ids in enter set methods because it generates automatic
