@@ -48,10 +48,10 @@ public class DataController {
     @Autowired
     private DataService dataService;
 
-    /**
+/*    *//**
      * Get all the populations.
      * @return Map id, PopulationDataset
-     */
+     *//*
     @GetMapping(path = "/populations", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<Integer, PopulationDataset>> getPopulations() {
         Map<Integer, PopulationDataset> populations = dataService.getPopulations();
@@ -60,11 +60,11 @@ public class DataController {
 
     }
 
-    /**
+    *//**
      * Get a population dataset.
      * @param populationID population id.
      * @return record content, null if not found
-     */
+     *//*
 
     @GetMapping(path = "/population/{populationID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PopulationDataset> getPopulation(@PathVariable("populationID") Integer populationID) {
@@ -76,11 +76,11 @@ public class DataController {
     }
 
 
-    /**
+    *//**
      * Get a patient
      * @param recordID record id
      * @return record content, null if not found and locked if there's an exception
-     */
+     *//*
     @GetMapping(path = "/patients/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PatientDTO> getPatient(@PathVariable("recordID") Integer recordID) {
         Patient dbRecord;
@@ -94,11 +94,11 @@ public class DataController {
         return new ResponseEntity<>(PatientDTO.from(dbRecord, null), HttpStatus.OK);
     }
 
-    /**
+    *//**
      * Get source.
      * @param recordID record id
      * @return record content, null if not found and locked if there's an exception
-     */
+     *//*
     @GetMapping(path = "/sources/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SourceDTO> getSource(@PathVariable("recordID") Integer recordID) {
         Source dbRecord;
@@ -111,11 +111,11 @@ public class DataController {
         return new ResponseEntity<>(SourceDTO.from(dbRecord, null), HttpStatus.OK);
     }
 
-    /**
+    *//**
      * Get a tumour.
      * @param recordID record id
      * @return record content, null if not found and locked if there is an exception
-     */
+     *//*
     @GetMapping(path = "/tumours/{recordID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TumourDTO> getTumour(@PathVariable("recordID") Integer recordID) {
         Tumour dbRecord;
@@ -127,7 +127,7 @@ public class DataController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(TumourDTO.from(dbRecord, null), HttpStatus.OK);
-    }
+    }*/
 
 
     /**
