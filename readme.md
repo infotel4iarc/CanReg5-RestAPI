@@ -54,7 +54,8 @@ Once you have started and connected to CanReg, go to Management -> Advanced -> S
 
 A pop-up window will be shown with the message "Database started".
 
-The embedded database use to stock import information is a H2 database, it can be accessed using the following link in local:
+The embedded database use to stock import information is a H2 database, it can be accessed using the following link in
+local:
 
 ```
 http://localhost:8080/h2-console
@@ -62,7 +63,8 @@ http://localhost:8080/h2-console
 
 This access link can be changed with `spring.h2.console.path` in properties.
 
-Data imported are stored in the holding database. For more information, please check the section about [import data in a holding database](#import-the-data-in-a-holding-database).
+Data imported are stored in the holding database. For more information, please check the section
+about [import data in a holding database](#import-the-data-in-a-holding-database).
 
 # Swagger UI
 
@@ -80,6 +82,9 @@ checked in the section [implementation](#Implementation)
 ## Metadata GET entry points
 
 #### Get system description xml file with its registry code
+
+Get the system description file in `.CanRegServer/System`, the registry code can be found on the login interface of
+CanReg.
 
 - GET /api/meta/system/{registryCode}
     - registryCode: system registry code
@@ -249,11 +254,6 @@ checked in the section [implementation](#Implementation)
     - 404: the source is not found
     - 409: the linked tumour is not found
 
-## Business GET entry points
-
-- Only for development purposes, will not be delivered (= no risk of data leak outside of Canreg)
-- TODO
-
 ## Bulk import
 
 This will import the selected file to the holding database of the current connected user. Imported file will be stored
@@ -360,7 +360,7 @@ Import the file using a worker, worker related details [here](#worker).
     - input data:
         - worker id
     - result:
-        - 200: return worker's current statu
+        - 200: return worker's current status
       ```
       WAITING
       ```
@@ -389,7 +389,8 @@ existing "import" feature in CanReg5.
 
 At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
 
-- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
+- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). please refer to
+  CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5 for more details.
 - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
     - The dao are stored in a maps to avoid creating them at each call.
 
