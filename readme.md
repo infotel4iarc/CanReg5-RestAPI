@@ -16,7 +16,6 @@ uses [CanReg](https://github.com/IARC-CSU/CanReg5) as a dependency.
     - [Bulk import worker](#bulk-import-worker)
 - [Security](#security)
     - [User management](#user-management)
-- [Import data in a holding database](#import-the-data-in-a-holding-database)
 
 ----------------------------------
 
@@ -54,8 +53,10 @@ Once you have started and connected to CanReg, go to Management -> Advanced -> S
 
 A pop-up window will be shown with the message "Database started".
 
-The embedded database use to stock import information is a H2 database, it can be accessed using the following link in
-local:
+### Embedded H2 database
+
+The embedded database use to store import [worker](#worker) information is an H2 database, it can be accessed using the
+following link locally:
 
 ```
 http://localhost:8080/h2-console
@@ -63,8 +64,17 @@ http://localhost:8080/h2-console
 
 This access link can be changed with `spring.h2.console.path` in properties.
 
-Data imported are stored in the holding database. For more information, please check the section
-about [import data in a holding database](#import-the-data-in-a-holding-database).
+### Holding database
+
+Data is imported in a holding database different from the current database. This is similar to what is done in the
+existing "import" feature in CanReg5.
+
+At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
+
+- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). Please refer to
+  CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5 for more details.
+- One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
+    - The dao are stored in a maps to avoid creating them at each call.
 
 # Swagger UI
 
@@ -93,6 +103,8 @@ CanReg.
 
 - GET /api/meta/dictionary/{dictionaryId}
     - dictionaryId
+
+Result example:
 
 ```      
 {
@@ -127,7 +139,7 @@ CanReg.
       "compound": false,
       "unkownCode": null,
       "descriptiveString": "Record status (Simple, Full length: 1)"
-      }
+  }
 ```
 
 #### Get all dictionaries in CanReg
@@ -139,11 +151,13 @@ CanReg.
 #### Create a patient
 
 - POST /api/patients
-    - input
-   ```
+
+Input example:
+
+```
   {
     "variables": {
-      "regno": "20055572",
+      "regno": "20991551",
       "pers": "1",
       "stat": "D",
       "patientcheckstatus": "",
@@ -166,11 +180,13 @@ CanReg.
       "birthd": "19990909"
     }
   }
-   ```
-    - 201: patient created
-        - the content of the created Patient is returned with created ids and with possible warnings in the variable "
-          format_errors"
-      ```
+```
+
+- 201: patient created
+    - the content of the created Patient is returned with created ids and with possible warnings in the variable "
+      format_errors"
+
+  ```
       "format_errors": [
         {
           "variableName": "birthd",
@@ -179,35 +195,67 @@ CanReg.
           "error": false
         }
       ]
-      ```
-    - 409: patient already exists with the same RegNo, or with the same PatientRecordID
-      ```
-      {
-        "timestamp": 1645171082093,
-        "status": 409,
-        "error": "Conflict",
-        "message": "Patient already exists with the same RegNo",
-        "path": "/api/setPatients"
-      }    
-      ```
-    - 400: validation error
-      ```
-      {
-        "timestamp": 1645170918683,
-        "status": 400,
-        "error": "Bad Request",
-        "message": "Validation failed: [{level='error', variable='birthd', value='1920-01-20', message='this date is not a valid date yyyyMMdd'}]",
-        "path": "/api/setPatients"
-      }    
-      ```
+  ```
+
+- 409: patient already exists with the same RegNo, or with the same PatientRecordID
+  ```
+  {
+    "timestamp": 1645171082093,
+    "status": 409,
+    "error": "Conflict",
+    "message": "Patient already exists with the same RegNo",
+    "path": "/api/setPatients"
+  }    
+  ```
+- 400: validation error
+  ```
+  {
+    "timestamp": 1645170918683,
+    "status": 400,
+    "error": "Bad Request",
+    "message": "Validation failed: [{level='error', variable='birthd', value='1920-01-20', message='this date is not a valid date yyyyMMdd'}]",
+    "path": "/api/setPatients"
+  }    
+  ```
 
 #### Create a tumour
 
 - POST /api/tumour
-    - 201: tumour created
-    - 400: validation error
-    - 404: the linked patient is not found
-    - 409: tumour already exists
+
+```
+  {
+      "variables": {
+          "extent": "LC",
+          "incid": "19990205",
+          "mptot": "",
+          "beh": "3",
+          "obsoleteflagtumourtable": "0",
+          "mpseq": "1",
+          "i10": "C859",
+          "mpcode": "",
+          "update": "20110510",
+          "iccc": "",
+          "patientidtumourtable": "20991551",
+          "chec": "1",
+          "laterality": "",
+          "tumourid": "209915510101",
+          "mor": "9590",
+          "top": "99",
+          "bas": "7",
+          "recs": "1",
+          "tumourupdatedby": "morten",
+          "tumourunduplicationstatus": "",
+          "addr": "",
+          "patientrecordidtumourtable": "2099155101",
+          "age": 24
+      }
+  }
+```
+
+- 201: tumour created
+- 400: validation error
+- 404: the linked patient is not found
+- 409: tumour already exists
 
 #### Create a source
 
@@ -263,7 +311,7 @@ properties.
 
 If `bulkUploadDirDeleteOnStartup` is set to true in properties, directories content will be deleted on start up.
 
-More details in section [import the data in a holding database](#import-the-data-in-a-holding-database)
+More details in section [holding database](#holding-database).
 
 #### Import file
 
@@ -303,7 +351,7 @@ More details in section [import the data in a holding database](#import-the-data
 
 #### Import file with worker
 
-Import the file using a worker, worker related details [here](#worker).
+Import the file using a worker, worker related details can be found [here](#worker).
 
 - POST /bulk/importWithWorker/{dataType}/{encodingName}/{separatorName}/{behaviour}/{writeOrTest}
     - input data
@@ -335,6 +383,14 @@ Import the file using a worker, worker related details [here](#worker).
         - 500: server error
 
 ## Bulk import worker
+
+### Worker
+
+If the file is imported using a worker, it will be stored.
+A worker is set to run every minute 5 to check the if there are file non-imported. If it is the case, the worker will
+import the oldest file among them.
+
+Worker's information are stored in the [H2 database](#embedded-h2-database).
 
 #### Get worker report
 
@@ -371,6 +427,8 @@ Import the file using a worker, worker related details [here](#worker).
 
 CanReg API uses Spring Security and Basic Authentication as a standard protection.
 
+This type of security is suitable for intranet use. If deployed to internet, extra configuration will be needed to avoid security issues such as DDoS attacks.
+
 ## User management
 
 User can be managed using user manager in CanReg.
@@ -382,22 +440,9 @@ User can be managed using user manager in CanReg.
 The role used to access api functionalities is currently `API`.
 This type of user can only access to CanReg through API and cannot log into CanReg client.
 
-# Import the data in a holding database
 
-Data is imported in a holding database different from the current database. This is similar to what is done in the
-existing "import" feature in CanReg5.
 
-At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
 
-- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). please refer to
-  CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5 for more details.
-- One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
-    - The dao are stored in a maps to avoid creating them at each call.
 
-### Worker
-
-If the file is imported using a worker, it will be stored.
-A worker is set to run every minute 5 to check the if there are file non-imported. If it is the case, the worker will
-import the oldest file among them.
 
 
