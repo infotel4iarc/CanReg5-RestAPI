@@ -1,5 +1,7 @@
 CanReg API user guide
 =========================
+CanReg API is a Spring boot application allowing user to import their records into a holding database. It
+uses [CanReg](https://github.com/IARC-CSU/CanReg5) as a dependency.
 
 # Summary
 
@@ -41,8 +43,8 @@ application-local.properties, you need the following VM option:
 
 ## Database
 
-The api uses [CanReg](https://github.com/IARC-CSU/CanReg5)'s database to store records related information (patient,
-tumour, source). Therefore, the application should be started before the api.
+The api uses CanReg's database to store system related information. Therefore, the application should be started before
+the api.
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
 
@@ -52,7 +54,7 @@ Once you have started and connected to CanReg, go to Management -> Advanced -> S
 
 A pop-up window will be shown with the message "Database started".
 
-The embedded database use to stock import information is a H2 database, it can be accessed using the following link:
+The embedded database use to stock import information is a H2 database, it can be accessed using the following link in local:
 
 ```
 http://localhost:8080/h2-console
@@ -130,6 +132,34 @@ checked in the section [implementation](#Implementation)
 #### Create a patient
 
 - POST /api/patients
+    - input
+   ```
+  {
+    "variables": {
+      "regno": "20055572",
+      "pers": "1",
+      "stat": "D",
+      "patientcheckstatus": "",
+      "race": "",
+      "causeofdeath": "",
+      "sex": "1",
+      "patientupdatedby": "morten",
+      "deathdate": "20060618",
+      "patientrecordstatus": "",
+      "civils": "",
+      "maidn": "",
+      "obsoleteflagpatienttable": "0",
+      "famn": "ROMANO",
+      "firstn": "JEREMIAH",
+      "midn": "",
+      "occu": "",
+      "patientupdatedate": "20110510",
+      "dlc": "20060618",
+      "patientrecordid": "2005557202",
+      "birthd": "19990909"
+    }
+  }
+   ```
     - 201: patient created
         - the content of the created Patient is returned with created ids and with possible warnings in the variable "
           format_errors"
@@ -337,25 +367,22 @@ Import the file using a worker, worker related details [here](#worker).
 
 # Security
 
-- CanReg5: TODO
-    - implement a new role in CanReg: REST-API
-    - can only access to CanReg through the Rest Api
-    - cannot log in CanReg client
-- Rest-api:
-    - Use Spring Security
-    - Use Basic Authentication that is a standard = the api clients will know how to use it
+CanReg API uses Spring Security and Basic Authentication as a standard protection.
 
 ## User management
 
-User can be managed using user manager in CanReg. The role used to access api functionalities is currently `ANALYST`.
-This can be modified in CanReg-API's properties.
+User can be managed using user manager in CanReg.
+
 <p align="center">
   <img alt="user_manager.png" src="user_manager.png" width="700"/>
 </p>
 
+The role used to access api functionalities is currently `API`.
+This type of user can only access to CanReg through API and cannot log into CanReg client.
+
 # Import the data in a holding database
 
-The data are imported in a holding database different from the current database. This is similar to what is done in the
+Data is imported in a holding database different from the current database. This is similar to what is done in the
 existing "import" feature in CanReg5.
 
 At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
@@ -363,8 +390,7 @@ At startup, if not already existing, CanReg5 server creates one holding database
 - The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes)
   See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
 - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
-    - The dao are stored in a mps to avoid creating them at each call.
-- TODO: Errors have to be returned to the caller: validation errors, warning messages...
+    - The dao are stored in a maps to avoid creating them at each call.
 
 ### Worker
 
@@ -372,10 +398,4 @@ If the file is imported using a worker, it will be stored.
 A worker is set to run every minute 5 to check the if there are file non-imported. If it is the case, the worker will
 import the oldest file among them.
 
-## Ids
-
-- Delete technical IDs: remove technical ids in enter set methods because it generates automatic
-  *patient: prid
-  *tumour: trid
-  *source: srid
 
