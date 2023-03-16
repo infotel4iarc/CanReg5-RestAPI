@@ -62,6 +62,8 @@ http://localhost:8080/h2-console
 
 This access link can be changed with `spring.h2.console.path` in properties.
 
+Data imported are stored in the holding database. For more information, please check the section about [import data in a holding database](#import-the-data-in-a-holding-database).
+
 # Swagger UI
 
 The Swagger can be accessed using the following link:
@@ -387,8 +389,7 @@ existing "import" feature in CanReg5.
 
 At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
 
-- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes)
-  See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
+- The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). See CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5.
 - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
     - The dao are stored in a maps to avoid creating them at each call.
 
