@@ -7,6 +7,7 @@ uses [CanReg](https://github.com/IARC-CSU/CanReg5) as a dependency.
 
 - [Run CanReg-API](#Run-CanReg-API)
     - [Local Run](#local-run)
+- [Log in into CanReg API](#login-into-canreg-api)
 - [Database](#database)
 - [Swagger UI](#swagger-ui)
 - [Implementation](#implementation)
@@ -40,10 +41,18 @@ application-local.properties, you need the following VM option:
   -Dspring.profiles.active=local
   ```
 
+## Login into CanReg API
+
+Once the API application started, you can log in into the API and access to its endpoints or other functionalities (h2 console, swagger).
+
+To log in to CanReg API, you need a user with role API. This can be managed with [user manager](#user-management) in CanReg.
+
 ## Database
 
-The api uses CanReg's database to store system related information. Therefore, the application should be started before
-the api.
+The API uses CanReg's database to store system related information. Therefore, the application should be started before
+the API.
+
+### Start CanReg database
 
 Once you have started and connected to CanReg, go to Management -> Advanced -> Start database server.
 
@@ -64,17 +73,25 @@ http://localhost:8080/h2-console
 
 This access link can be changed with `spring.h2.console.path` in properties.
 
+![h2_database.png](h2_database.png)
+
+If you have already [logged into API](#user-management), you can connect to h2 database without user and password. This can be changed in properties. 
+
+!!! please make sure in the above interface that the jdbc URL is correct before connecting !!!
+
 ### Holding database
 
 Data is imported in a holding database different from the current database. This is similar to what is done in the
 existing "import" feature in CanReg5.
 
 At startup, if not already existing, CanReg5 server creates one holding database for each rest user.
+About user and role, more details [here](#user-management).
 
 - The database schema is: "HOLDING_" + registryCode + "_" + userName (without spaces and quotes). Please refer to
   CanRegServerImpl.getRegistryCodeForApiHolding in CanReg5 for more details.
 - One CanRegDAO is created for each api user that calls the API: see HoldingDBHandler
     - The dao are stored in a maps to avoid creating them at each call.
+- For more details about database initialization, please check CanRegServerImpl.initHoldingDbsForApiUsers in CanReg.
 
 # Swagger UI
 
@@ -392,6 +409,8 @@ import the oldest file among them.
 
 Worker's information are stored in the [H2 database](#embedded-h2-database).
 
+!!! parameters must be in CAPITAL LETTERS !!!
+
 #### Get worker report
 
 - GET /api/worker/report/{id}
@@ -438,7 +457,11 @@ User can be managed using user manager in CanReg.
 </p>
 
 The role used to access api functionalities is currently `API`.
-This type of user can only access to CanReg through API and cannot log into CanReg client.
+This type of user can only access to CanReg through API and cannot log into CanReg client. 
+
+!!! Please make sure the CanReg application you are using has API as role defined to init [holding database](#holding-database) !!!
+
+This can be checked in CanRegServerImpl.initHoldingDbsForApiUsers in CanReg.
 
 
 
